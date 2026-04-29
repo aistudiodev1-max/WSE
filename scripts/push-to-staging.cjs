@@ -53,7 +53,7 @@ async function pushToStaging() {
           name: 'AI Coding Agent',
           email: 'agent@ais.dev'
         },
-        message: 'feat: set hasInteractedWithVerse to true by default to show embed suite immediately'
+        message: 'feat: update apiClient to pass token as Auth Bearer'
       });
       console.log('Changes committed.');
     } catch (e) {

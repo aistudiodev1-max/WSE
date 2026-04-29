@@ -3,7 +3,7 @@ import { useAuthStore } from '../features/auth/useAuthStore';
 const BASE_URL = process.env.NEXT_PUBLIC_API_ENDPOINT || 'https://api-test.wisdomebooksclub.com';
 
 export const apiClient = async (path: string, init: RequestInit = {}) => {
-  const token = 'MOCK_TOKEN_OR_FIREBASE_TOKEN'; // In a real app with Firebase, you'd get the auth token here.
+  const token = useAuthStore.getState().token;
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
