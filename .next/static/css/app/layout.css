@@ -671,6 +671,9 @@ video {
 .z-50 {
   z-index: 50;
 }
+.z-\[100\] {
+  z-index: 100;
+}
 .mx-0\.5 {
   margin-left: 0.125rem;
   margin-right: 0.125rem;
@@ -1121,9 +1124,6 @@ video {
 .bg-zinc-100 {
   --tw-bg-opacity: 1;
   background-color: rgb(244 244 245 / var(--tw-bg-opacity, 1));
-}
-.bg-zinc-100\/90 {
-  background-color: rgb(244 244 245 / 0.9);
 }
 .bg-zinc-200 {
   --tw-bg-opacity: 1;

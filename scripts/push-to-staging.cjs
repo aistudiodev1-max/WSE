@@ -53,7 +53,7 @@ async function pushToStaging() {
           name: 'AI Coding Agent',
           email: 'agent@ais.dev'
         },
-        message: 'feat: update apiClient to pass token as Auth Bearer'
+        message: 'fix: API endpoint base path and planId reactivity'
       });
       console.log('Changes committed.');
     } catch (e) {
