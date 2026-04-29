@@ -27,6 +27,7 @@ interface UIState {
   setEstudyLauncher: (launcher: { open: boolean; verseRef: string }) => void;
   setSuiteRouteKey: (key: EstudySuiteRouteKey) => void;
   setSuitePassageOverride: (override: string | null) => void;
+  setIsEmbed: (isEmbed: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({

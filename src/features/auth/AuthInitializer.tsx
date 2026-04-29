@@ -7,7 +7,7 @@ import { User } from '../../types';
 
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
   const { setUser, setAppUser, setToken, setLoading } = useAuthStore();
-  const setIsEmbed = useUIStore((state: any) => state.setIsEmbed);
+  const { setIsEmbed, setActiveNav } = useUIStore();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -28,6 +28,7 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
 
       if (isEmbedFromUrl) {
         setIsEmbed(true);
+        setActiveNav('Wisdom Study Engine');
       }
 
       if (urlToken) {

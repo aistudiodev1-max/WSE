@@ -12,7 +12,7 @@ async function pushToStaging() {
   const tempGitDir = path.join(dir, '.git_temp');
 
   if (!token) {
-    console.error('Error: GITHUB_TOKEN (or GITHUB_PAT) environment variable is not set.');
+    console.error('Error: GITHUB_TOKEN environment variable is not set.');
     return;
   }
 
@@ -58,7 +58,7 @@ async function pushToStaging() {
           name: 'AI Coding Agent',
           email: 'agent@ais.dev'
         },
-        message: 'feat: handle WEC integration (token passing, embed mode, hide navbar)'
+        message: 'feat: add embed overlay and auth redirect to localhost:8000'
       });
       console.log('Changes committed.');
     } catch (e) {
@@ -78,7 +78,7 @@ async function pushToStaging() {
       remote: 'origin',
       ref: branch,
       url,
-      force: false, // PRESERVE HISTORY
+      force: false,
       onAuth: () => ({ username: token })
     });
 
@@ -89,7 +89,6 @@ async function pushToStaging() {
     }
   } catch (err) {
     console.error('Error during git operation:', err.message);
-    // Cleanup if possible
     if (fs.existsSync(tempGitDir)) {
       fs.rmSync(tempGitDir, { recursive: true, force: true });
     }
