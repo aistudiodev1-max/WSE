@@ -1,5 +1,21 @@
 import { apiClient } from '../../../lib/apiClient';
 
+export interface UserProfileResponse {
+  user: {
+    id: number;
+    institution_id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    roles: Array<{ name: string }>;
+    institution: {
+      id: number;
+      name: string;
+    };
+    group_id?: number | string; // Assuming it might be present in some responses
+  };
+}
+
 export interface UserProfile {
   user_id: string;
   user_name: string;
@@ -44,7 +60,18 @@ export const memberApi = {
    * Get current user profile (v1)
    */
   getProfile: async (): Promise<UserProfile> => {
-    return apiClient('/api/v1/profile');
+    const data: UserProfileResponse = await apiClient('/api/v1/profile');
+    const { user } = data;
+    
+    return {
+      user_id: String(user.id),
+      user_name: `${user.first_name} ${user.last_name}`.trim(),
+      email: user.email,
+      institution_id: String(user.institution_id),
+      institution_name: user.institution.name,
+      group_id: user.group_id ? String(user.group_id) : undefined,
+      role: user.roles?.[0]?.name || 'Member',
+    };
   },
 
   /**
