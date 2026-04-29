@@ -53,7 +53,7 @@ async function pushToStaging() {
           name: 'AI Coding Agent',
           email: 'agent@ais.dev'
         },
-        message: 'fix: properly render modal using z-[100] instead of z-100'
+        message: 'feat: set hasInteractedWithVerse to true by default to show embed suite immediately'
       });
       console.log('Changes committed.');
     } catch (e) {

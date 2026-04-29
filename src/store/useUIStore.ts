@@ -42,7 +42,7 @@ export const useUIStore = create<UIState>((set) => ({
   estudyLauncher: { open: false, verseRef: '' },
   suiteRouteKey: 'parallelBible',
   suitePassageOverride: null,
-  hasInteractedWithVerse: false,
+  hasInteractedWithVerse: true,
 
   setActiveNav: (activeNav) => set({ activeNav }),
   setNotesCollapsed: (isNotesCollapsed) => set({ isNotesCollapsed }),
