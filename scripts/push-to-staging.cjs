@@ -1,4 +1,3 @@
-
 const git = require('isomorphic-git');
 const http = require('isomorphic-git/http/node');
 const fs = require('fs');
@@ -16,10 +15,9 @@ async function pushToStaging() {
     return;
   }
 
-  console.log('Preparing push to staging (preserving history)...');
+  console.log('Preparing push to staging...');
 
   try {
-    // 1. Clone the staging branch to a temporary directory
     console.log(`Cloning ${branch} branch from ${url}...`);
     if (fs.existsSync(tempGitDir)) {
       fs.rmSync(tempGitDir, { recursive: true, force: true });
@@ -36,7 +34,6 @@ async function pushToStaging() {
       onAuth: () => ({ username: token })
     });
 
-    // 2. Move the .git folder from the temp clone to our current directory
     console.log('Integrating remote history...');
     const currentGitDir = path.join(dir, '.git');
     if (fs.existsSync(currentGitDir)) {
@@ -45,11 +42,9 @@ async function pushToStaging() {
     fs.renameSync(path.join(tempGitDir, '.git'), currentGitDir);
     fs.rmSync(tempGitDir, { recursive: true, force: true });
 
-    // 3. Stage all local changes
     console.log('Staging files...');
     await git.add({ fs, dir, filepath: '.' });
 
-    // 4. Commit changes
     try {
       await git.commit({
         fs,
@@ -58,7 +53,7 @@ async function pushToStaging() {
           name: 'AI Coding Agent',
           email: 'agent@ais.dev'
         },
-        message: 'feat: add embed overlay and auth redirect to localhost:8000'
+        message: 'feat: hide empty embed reader and interact via modal'
       });
       console.log('Changes committed.');
     } catch (e) {
@@ -69,7 +64,6 @@ async function pushToStaging() {
       }
     }
 
-    // 5. Push changes
     console.log(`Pushing to ${url} on branch ${branch}...`);
     const pushResult = await git.push({
       fs,
