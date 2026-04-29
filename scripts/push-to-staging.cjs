@@ -9,15 +9,16 @@ async function pushToStaging() {
   const token = process.env.GITHUB_TOKEN || process.env.GITHUB_PAT;
   const branch = 'staging';
   const tempGitDir = path.join(dir, '.git_temp');
-
+  
   if (!token) {
     console.error('Error: GITHUB_TOKEN environment variable is not set.');
     return;
   }
 
-  console.log('Preparing push to staging (preserving history)...');
+  console.log('Preparing push to staging (ensuring history is preserved)...');
 
   try {
+    // 1. Clone remote staging branch to a temp dir to get the latest history
     console.log(`Cloning ${branch} branch from ${url}...`);
     if (fs.existsSync(tempGitDir)) {
       fs.rmSync(tempGitDir, { recursive: true, force: true });
@@ -34,6 +35,7 @@ async function pushToStaging() {
       onAuth: () => ({ username: token })
     });
 
+    // 2. Replace local corrupted .git with the one from clone
     console.log('Integrating remote history...');
     const currentGitDir = path.join(dir, '.git');
     if (fs.existsSync(currentGitDir)) {
@@ -42,9 +44,11 @@ async function pushToStaging() {
     fs.renameSync(path.join(tempGitDir, '.git'), currentGitDir);
     fs.rmSync(tempGitDir, { recursive: true, force: true });
 
+    // 3. Staging files
     console.log('Staging files...');
     await git.add({ fs, dir, filepath: '.' });
 
+    // 4. Commit
     try {
       await git.commit({
         fs,
@@ -53,7 +57,7 @@ async function pushToStaging() {
           name: 'AI Coding Agent',
           email: 'agent@ais.dev'
         },
-        message: 'fix: API endpoint base path and planId reactivity'
+        message: 'chore: push latest changes to staging'
       });
       console.log('Changes committed.');
     } catch (e) {
@@ -64,6 +68,7 @@ async function pushToStaging() {
       }
     }
 
+    // 5. Push
     console.log(`Pushing to ${url} on branch ${branch}...`);
     const pushResult = await git.push({
       fs,
