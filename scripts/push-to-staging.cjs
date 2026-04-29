@@ -53,7 +53,7 @@ async function pushToStaging() {
           name: 'AI Coding Agent',
           email: 'agent@ais.dev'
         },
-        message: 'fix: properly remove isEmbed logic so WSE sidebars are preserved, only hide WEC iframe until user interacts'
+        message: 'fix: properly render modal using z-[100] instead of z-100'
       });
       console.log('Changes committed.');
     } catch (e) {
