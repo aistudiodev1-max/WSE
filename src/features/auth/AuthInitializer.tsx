@@ -40,7 +40,8 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
             licensed: true,
             membership_level: 'Standard',
             church_id: profile.institution_id,
-            church_name: profile.institution_name
+            church_name: profile.institution_name,
+            group_id: profile.group_id
           });
         } catch (error) {
           console.error('Failed to fetch profile:', error);

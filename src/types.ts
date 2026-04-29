@@ -11,6 +11,7 @@ export interface User {
   membership_level: string;
   church_id: string;
   church_name: string;
+  group_id?: string;
 }
 
 export interface Group {

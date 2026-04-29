@@ -6,6 +6,7 @@ export interface UserProfile {
   email: string;
   institution_id: string;
   institution_name: string;
+  group_id?: string;
   role: string;
 }
 

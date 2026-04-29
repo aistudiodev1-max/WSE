@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { memberApi, PlanProgressPayload, SessionProgressPayload } from '../api/memberApi';
+import { useAuthStore } from '../../auth/useAuthStore';
 
 export const memberKeys = {
   all: ['member'] as const,
@@ -19,7 +20,11 @@ export const useProfile = () => {
   });
 };
 
-export const useGroupPlanSessions = (institution: string, group: string, planId: string) => {
+export const useGroupPlanSessions = (planId: string) => {
+  const appUser = useAuthStore((state) => state.appUser);
+  const institution = appUser?.church_id || 'default';
+  const group = appUser?.group_id || 'default';
+
   return useQuery({
     queryKey: memberKeys.sessions(institution, group, planId),
     queryFn: () => memberApi.getGroupPlanSessions(institution, group, planId),
@@ -27,7 +32,11 @@ export const useGroupPlanSessions = (institution: string, group: string, planId:
   });
 };
 
-export const useSessionDetails = (institution: string, group: string, planId: string, sessionId: string) => {
+export const useSessionDetails = (planId: string, sessionId: string) => {
+  const appUser = useAuthStore((state) => state.appUser);
+  const institution = appUser?.church_id || 'default';
+  const group = appUser?.group_id || 'default';
+
   return useQuery({
     queryKey: memberKeys.session(institution, group, planId, sessionId),
     queryFn: () => memberApi.getSessionDetails(institution, group, planId, sessionId),
@@ -35,7 +44,11 @@ export const useSessionDetails = (institution: string, group: string, planId: st
   });
 };
 
-export const usePlanProgress = (institution: string, group: string, planId: string) => {
+export const usePlanProgress = (planId: string) => {
+  const appUser = useAuthStore((state) => state.appUser);
+  const institution = appUser?.church_id || 'default';
+  const group = appUser?.group_id || 'default';
+
   return useQuery({
     queryKey: memberKeys.progress(institution, group, planId),
     queryFn: () => memberApi.getPlanProgress(institution, group, planId),
@@ -45,44 +58,44 @@ export const usePlanProgress = (institution: string, group: string, planId: stri
 
 export const useUpdatePlanProgress = () => {
   const queryClient = useQueryClient();
+  const appUser = useAuthStore((state) => state.appUser);
+  const institutionId = appUser?.church_id || 'default';
+  const groupId = appUser?.group_id || 'default';
+
   return useMutation({
     mutationFn: ({ 
-      institution, 
-      group, 
       planId, 
       payload 
     }: { 
-      institution: string; 
-      group: string; 
       planId: string; 
       payload: PlanProgressPayload 
-    }) => memberApi.updatePlanProgress(institution, group, planId, payload),
+    }) => memberApi.updatePlanProgress(institutionId, groupId, planId, payload),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: memberKeys.progress(variables.institution, variables.group, variables.planId) });
+      queryClient.invalidateQueries({ queryKey: memberKeys.progress(institutionId, groupId, variables.planId) });
     },
   });
 };
 
 export const useUpdateSessionProgress = () => {
   const queryClient = useQueryClient();
+  const appUser = useAuthStore((state) => state.appUser);
+  const institutionId = appUser?.church_id || 'default';
+  const groupId = appUser?.group_id || 'default';
+
   return useMutation({
     mutationFn: ({ 
-      institution, 
-      group, 
       planId, 
       sessionId, 
       payload 
     }: { 
-      institution: string; 
-      group: string; 
       planId: string; 
       sessionId: string; 
       payload: SessionProgressPayload 
-    }) => memberApi.updateSessionProgress(institution, group, planId, sessionId, payload),
+    }) => memberApi.updateSessionProgress(institutionId, groupId, planId, sessionId, payload),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: memberKeys.sessions(variables.institution, variables.group, variables.planId) });
-      queryClient.invalidateQueries({ queryKey: memberKeys.session(variables.institution, variables.group, variables.planId, variables.sessionId) });
-      queryClient.invalidateQueries({ queryKey: memberKeys.progress(variables.institution, variables.group, variables.planId) });
+      queryClient.invalidateQueries({ queryKey: memberKeys.sessions(institutionId, groupId, variables.planId) });
+      queryClient.invalidateQueries({ queryKey: memberKeys.session(institutionId, groupId, variables.planId, variables.sessionId) });
+      queryClient.invalidateQueries({ queryKey: memberKeys.progress(institutionId, groupId, variables.planId) });
     },
   });
 };
