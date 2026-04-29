@@ -3,32 +3,81 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Sparkles, BookOpen, Library, CheckCircle2, BookMarked, ChevronRight, Layout } from 'lucide-react';
 import { SidebarItem, Card, ProgressCircle } from './SidebarComponents';
-import { Session, StudyPlan } from '../types';
+import { useUIStore } from '../store/useUIStore';
+import { useAuthStore } from '../features/auth/useAuthStore';
+import { usePlans, useAssignments } from '../features/plans/hooks';
+import { useSessions } from '../features/sessions/hooks';
+import { useProgress, useSaveProgress } from '../features/progress/hooks';
+import { resolvePermissions } from '../utils/permissions';
+import { getRoleInGroup } from '../utils/permissions';
+import { Group } from '../types';
+import { useGroups } from '../features/groups/hooks';
 
-interface LeftSidebarProps {
-  session: Session;
-  plan: StudyPlan;
-  assignedPlans: StudyPlan[];
-  selectedPlanId: string;
-  setSelectedPlan: (id: string) => void;
-  onComplete: () => void;
-  progressPercent: number;
-  onOpenEstudyLauncher: (verseRef: string) => void;
-}
+export const LeftSidebar: React.FC = () => {
+  const { user, appUser } = useAuthStore();
+  const { 
+    selectedPlanId, setSelectedPlanId,
+    selectedSessionOrder,
+    selectedGroupId,
+    setEstudyLauncher
+  } = useUIStore();
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = ({ 
-  session, 
-  plan, 
-  assignedPlans, 
-  selectedPlanId,
-  setSelectedPlan,
-  onComplete,
-  progressPercent,
-  onOpenEstudyLauncher,
-}) => {
+  const { data: allPlans = [] } = usePlans();
+  const { data: allAssignments = [] } = useAssignments();
+  const { data: allGroups = [] } = useGroups();
+  const { data: sessions = [] } = useSessions(selectedPlanId);
+  const { data: userProgress = [] } = useProgress();
+  const saveProgressMutation = useSaveProgress();
+
+  // --- Computed ---
+  const currentGroup = useMemo(() => allGroups.find(g => g.group_id === selectedGroupId) || allGroups[0], [allGroups, selectedGroupId]);
+
+  const assignedPlans = useMemo(() => {
+    const ids = allAssignments.filter(a => a.group_id === selectedGroupId).map(a => a.plan_id);
+    return allPlans.filter(p => ids.includes(p.plan_id));
+  }, [allAssignments, selectedGroupId, allPlans]);
+
+  const currentPlan = useMemo(() => allPlans.find(p => p.plan_id === selectedPlanId) || assignedPlans[0] || allPlans[0], [selectedPlanId, assignedPlans, allPlans]);
+  const session = useMemo(() => sessions.find(s => s.order === selectedSessionOrder) || sessions[0], [sessions, selectedSessionOrder]);
+
+  const progressPercent = useMemo(() => {
+    if (!sessions.length) return 0;
+    const completed = userProgress.filter(p => 
+      sessions.some(s => s.session_id === p.session_id) && 
+      p.status === 'completed'
+    ).length;
+    return Math.round((completed / sessions.length) * 100);
+  }, [userProgress, sessions]);
+
+  const context = useMemo(() => ({
+    role_in_group: (appUser && currentGroup) ? getRoleInGroup(appUser, currentGroup) : 'member',
+    membership_level: appUser?.membership_level || 'Free',
+    licensed: appUser?.licensed ?? true
+  }), [appUser, currentGroup]);
+
+  const permissions = useMemo(() => resolvePermissions(context), [context]);
+
+  const handleComplete = async () => {
+    if (!permissions.can_track_progress || !user || !session) return;
+    const exists = userProgress.find(p => p.session_id === session.session_id);
+    if (!exists) {
+      saveProgressMutation.mutate({
+        progress_id: `prog_${Date.now()}`,
+        user_id: user.uid,
+        group_id: selectedGroupId,
+        session_id: session.session_id,
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      });
+    }
+  };
+
+  const onOpenEstudyLauncher = (verseRef: string) => setEstudyLauncher({ open: true, verseRef });
+
+  if (!session || !currentPlan) return null;
   return (
     <div className="z-10 flex h-full min-h-0 w-[320px] shrink-0 flex-col overflow-y-auto border-r border-zinc-200 bg-white no-scrollbar shadow-sm">
       {/* Session Progress Header */}
@@ -39,7 +88,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                <Sparkles className="text-brand-orange" size={18} />
                <h2 className="text-sm font-black uppercase tracking-tighter text-brand-dark">Study Session</h2>
             </div>
-            <span className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">{plan?.title || "No Plan"}</span>
+            <span className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">{currentPlan?.title || "No Plan"}</span>
           </div>
           <ProgressCircle percent={progressPercent} />
         </div>
@@ -66,7 +115,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               assignedPlans.map(p => (
                 <button
                   key={p.plan_id}
-                  onClick={() => setSelectedPlan(p.plan_id)}
+                  onClick={() => setSelectedPlanId(p.plan_id)}
                   className={`w-full text-left p-3 rounded-xl border transition-all relative group ${
                     selectedPlanId === p.plan_id 
                       ? 'bg-brand-dark border-brand-dark text-white shadow-md' 
@@ -139,7 +188,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
       <div className="p-6 border-t border-zinc-200 bg-white">
         <button 
-          onClick={onComplete}
+          onClick={handleComplete}
           className={`w-full py-4 rounded-full flex items-center justify-center gap-2 font-black transition-all group shadow-lg active:scale-95 ${
             progressPercent === 100 
               ? 'bg-emerald-100 text-emerald-700 cursor-default' 

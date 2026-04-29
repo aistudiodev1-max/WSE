@@ -5,22 +5,33 @@
 
 import React, { useMemo } from 'react';
 import { EstudySuiteRouteKey, buildSuiteReaderSrc } from '../utils/estudyUrls';
-
-interface MainContentProps {
-  activeNav: string;
-  suiteRouteKey: EstudySuiteRouteKey;
-  /** Passage string for `q` on Parallel / Interlinear / Bible Plus (e.g. `John 3:16`). */
-  passage: string;
-}
+import { useUIStore } from '../store/useUIStore';
+import { useAuthStore } from '../features/auth/useAuthStore';
+import { useSessions } from '../features/sessions/hooks';
+import { usePlans } from '../features/plans/hooks';
 
 const WISDOM_STUDY_ENGINE = 'Wisdom Study Engine';
 
-export const MainContent: React.FC<MainContentProps> = ({ activeNav, suiteRouteKey, passage }) => {
+export const MainContent: React.FC = () => {
+  const { 
+    activeNav, 
+    suiteRouteKey, 
+    suitePassageOverride,
+    selectedPlanId,
+    selectedSessionOrder
+  } = useUIStore();
+
+  const { token } = useAuthStore();
+
+  const { data: sessions = [] } = useSessions(selectedPlanId);
+  const currentSession = useMemo(() => sessions.find(s => s.order === selectedSessionOrder) || sessions[0], [sessions, selectedSessionOrder]);
+
   const showStudySuite = activeNav === WISDOM_STUDY_ENGINE;
+  const passage = suitePassageOverride ?? currentSession?.primary_verse ?? '';
 
   const suiteEmbedSrc = useMemo(
-    () => buildSuiteReaderSrc(suiteRouteKey, passage),
-    [suiteRouteKey, passage],
+    () => buildSuiteReaderSrc(suiteRouteKey as EstudySuiteRouteKey, passage, token),
+    [suiteRouteKey, passage, token],
   );
 
   return (

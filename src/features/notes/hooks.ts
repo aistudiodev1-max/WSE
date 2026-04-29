@@ -3,9 +3,9 @@ import { notesApi } from './api';
 import { AppNote } from '../../types';
 
 export const useNotes = () => {
-  return useQuery({
+  return useQuery<AppNote[], Error>({
     queryKey: ['notes'],
-    queryFn: notesApi.getNotes,
+    queryFn: () => notesApi.getNotes(),
   });
 };
 

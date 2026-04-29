@@ -14,6 +14,7 @@ interface UIState {
   estudyLauncher: { open: boolean; verseRef: string };
   suiteRouteKey: EstudySuiteRouteKey;
   suitePassageOverride: string | null;
+  isEmbed: boolean;
 
   setActiveNav: (nav: string) => void;
   setNotesCollapsed: (collapsed: boolean) => void;
@@ -40,6 +41,7 @@ export const useUIStore = create<UIState>((set) => ({
   estudyLauncher: { open: false, verseRef: '' },
   suiteRouteKey: 'parallelBible',
   suitePassageOverride: null,
+  isEmbed: false,
 
   setActiveNav: (activeNav) => set({ activeNav }),
   setNotesCollapsed: (isNotesCollapsed) => set({ isNotesCollapsed }),
@@ -52,4 +54,5 @@ export const useUIStore = create<UIState>((set) => ({
   setEstudyLauncher: (estudyLauncher) => set({ estudyLauncher }),
   setSuiteRouteKey: (suiteRouteKey) => set({ suiteRouteKey }),
   setSuitePassageOverride: (suitePassageOverride) => set({ suitePassageOverride }),
+  setIsEmbed: (isEmbed: boolean) => set({ isEmbed }),
 }));

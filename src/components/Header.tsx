@@ -6,12 +6,8 @@
 import React from 'react';
 import { User } from 'lucide-react';
 import { motion } from 'motion/react';
-
-interface HeaderProps {
-  userName: string;
-  activeNav: string;
-  setActiveNav: (nav: string) => void;
-}
+import { useUIStore } from '../store/useUIStore';
+import { useAuthStore } from '../features/auth/useAuthStore';
 
 type NavItem = {
   name: string;
@@ -19,7 +15,13 @@ type NavItem = {
   href?: string;
 };
 
-export const Header: React.FC<HeaderProps> = ({ userName, activeNav, setActiveNav }) => {
+export const Header: React.FC = () => {
+  const { activeNav, setActiveNav, isEmbed } = useUIStore();
+  const { appUser } = useAuthStore();
+  const userName = appUser?.user_name || 'Guest User';
+
+  if (isEmbed) return null;
+
   const navItems: NavItem[] = [
     { name: 'Home', href: 'https://www.wisdomebooksclub.com/' },
     { name: 'Pearls of Wisdom', href: 'https://www.wisdomebooksclub.com/pearls-of-wisdom' },
