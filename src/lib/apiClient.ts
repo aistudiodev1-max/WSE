@@ -1,6 +1,6 @@
 import { useAuthStore } from '../features/auth/useAuthStore';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_ENDPOINT || 'https://api-test.wisdomebooksclub.com';
+const BASE_URL = process.env.NEXT_PUBLIC_API_ENDPOINT || 'https://api-test.wisdomebooksclub.com/api/v2';
 
 export const apiClient = async (path: string, init: RequestInit = {}) => {
   const token = useAuthStore.getState().token;

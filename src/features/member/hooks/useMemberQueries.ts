@@ -22,36 +22,36 @@ export const useProfile = () => {
 
 export const useGroupPlanSessions = (planId: string) => {
   const appUser = useAuthStore((state) => state.appUser);
-  const institution = appUser?.church_id || 'default';
-  const group = appUser?.group_id || 'default';
+  const institution = appUser?.church_id;
+  const group = appUser?.group_id || appUser?.church_id;
 
   return useQuery({
-    queryKey: memberKeys.sessions(institution, group, planId),
-    queryFn: () => memberApi.getGroupPlanSessions(institution, group, planId),
+    queryKey: memberKeys.sessions(institution!, group!, planId),
+    queryFn: () => memberApi.getGroupPlanSessions(institution!, group!, planId),
     enabled: !!institution && !!group && !!planId,
   });
 };
 
 export const useSessionDetails = (planId: string, sessionId: string) => {
   const appUser = useAuthStore((state) => state.appUser);
-  const institution = appUser?.church_id || 'default';
-  const group = appUser?.group_id || 'default';
+  const institution = appUser?.church_id;
+  const group = appUser?.group_id || appUser?.church_id;
 
   return useQuery({
-    queryKey: memberKeys.session(institution, group, planId, sessionId),
-    queryFn: () => memberApi.getSessionDetails(institution, group, planId, sessionId),
+    queryKey: memberKeys.session(institution!, group!, planId, sessionId),
+    queryFn: () => memberApi.getSessionDetails(institution!, group!, planId, sessionId),
     enabled: !!institution && !!group && !!planId && !!sessionId,
   });
 };
 
 export const usePlanProgress = (planId: string) => {
   const appUser = useAuthStore((state) => state.appUser);
-  const institution = appUser?.church_id || 'default';
-  const group = appUser?.group_id || 'default';
+  const institution = appUser?.church_id;
+  const group = appUser?.group_id || appUser?.church_id;
 
   return useQuery({
-    queryKey: memberKeys.progress(institution, group, planId),
-    queryFn: () => memberApi.getPlanProgress(institution, group, planId),
+    queryKey: memberKeys.progress(institution!, group!, planId),
+    queryFn: () => memberApi.getPlanProgress(institution!, group!, planId),
     enabled: !!institution && !!group && !!planId,
   });
 };
@@ -59,8 +59,8 @@ export const usePlanProgress = (planId: string) => {
 export const useUpdatePlanProgress = () => {
   const queryClient = useQueryClient();
   const appUser = useAuthStore((state) => state.appUser);
-  const institutionId = appUser?.church_id || 'default';
-  const groupId = appUser?.group_id || 'default';
+  const institutionId = appUser?.church_id;
+  const groupId = appUser?.group_id || appUser?.church_id;
 
   return useMutation({
     mutationFn: ({ 
@@ -69,9 +69,11 @@ export const useUpdatePlanProgress = () => {
     }: { 
       planId: string; 
       payload: PlanProgressPayload 
-    }) => memberApi.updatePlanProgress(institutionId, groupId, planId, payload),
+    }) => memberApi.updatePlanProgress(institutionId!, groupId!, planId, payload),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: memberKeys.progress(institutionId, groupId, variables.planId) });
+      if (institutionId && groupId) {
+        queryClient.invalidateQueries({ queryKey: memberKeys.progress(institutionId, groupId, variables.planId) });
+      }
     },
   });
 };
@@ -79,8 +81,8 @@ export const useUpdatePlanProgress = () => {
 export const useUpdateSessionProgress = () => {
   const queryClient = useQueryClient();
   const appUser = useAuthStore((state) => state.appUser);
-  const institutionId = appUser?.church_id || 'default';
-  const groupId = appUser?.group_id || 'default';
+  const institutionId = appUser?.church_id;
+  const groupId = appUser?.group_id || appUser?.church_id;
 
   return useMutation({
     mutationFn: ({ 
@@ -91,11 +93,13 @@ export const useUpdateSessionProgress = () => {
       planId: string; 
       sessionId: string; 
       payload: SessionProgressPayload 
-    }) => memberApi.updateSessionProgress(institutionId, groupId, planId, sessionId, payload),
+    }) => memberApi.updateSessionProgress(institutionId!, groupId!, planId, sessionId, payload),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: memberKeys.sessions(institutionId, groupId, variables.planId) });
-      queryClient.invalidateQueries({ queryKey: memberKeys.session(institutionId, groupId, variables.planId, variables.sessionId) });
-      queryClient.invalidateQueries({ queryKey: memberKeys.progress(institutionId, groupId, variables.planId) });
+      if (institutionId && groupId) {
+        queryClient.invalidateQueries({ queryKey: memberKeys.sessions(institutionId, groupId, variables.planId) });
+        queryClient.invalidateQueries({ queryKey: memberKeys.session(institutionId, groupId, variables.planId, variables.sessionId) });
+        queryClient.invalidateQueries({ queryKey: memberKeys.progress(institutionId, groupId, variables.planId) });
+      }
     },
   });
 };

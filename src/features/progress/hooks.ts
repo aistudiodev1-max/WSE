@@ -5,22 +5,23 @@ import { useAuthStore } from '../auth/useAuthStore';
 
 export const useProgress = (planId = 'default') => {
   const appUser = useAuthStore((state) => state.appUser);
-  const institutionId = appUser?.church_id || 'default';
-  const groupId = appUser?.group_id || 'default';
+  const institutionId = appUser?.church_id;
+  const groupId = appUser?.group_id || appUser?.church_id;
 
   return useQuery<Progress[], Error>({
     queryKey: ['progress', institutionId, groupId, planId],
-    queryFn: () => progressApi.getProgress(institutionId, groupId, planId),
+    queryFn: () => progressApi.getProgress(institutionId!, groupId!, planId),
+    enabled: !!institutionId && !!groupId,
   });
 };
 
 export const useSaveProgress = () => {
   const queryClient = useQueryClient();
   const appUser = useAuthStore((state) => state.appUser);
-  const institutionId = appUser?.church_id || 'default';
+  const institutionId = appUser?.church_id;
 
   return useMutation({
-    mutationFn: (progress: Progress) => progressApi.saveProgress(progress, institutionId),
+    mutationFn: (progress: Progress) => progressApi.saveProgress(progress, institutionId!),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['progress'] });
       // Also invalidate with specific keys if needed

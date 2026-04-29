@@ -5,12 +5,12 @@ import { useAuthStore } from '../auth/useAuthStore';
 
 export const useSessions = (planId: string) => {
   const appUser = useAuthStore((state) => state.appUser);
-  const institutionId = appUser?.church_id || 'default';
-  const groupId = appUser?.group_id || 'default';
+  const institutionId = appUser?.church_id;
+  const groupId = appUser?.group_id || appUser?.church_id; // temporarily use church_id or fallback
 
   return useQuery<Session[], Error>({
     queryKey: ['sessions', planId, institutionId, groupId],
-    queryFn: () => sessionsApi.getSessions(planId, institutionId, groupId),
-    enabled: !!planId,
+    queryFn: () => sessionsApi.getSessions(planId, institutionId!, groupId!),
+    enabled: !!planId && !!institutionId && !!groupId,
   });
 };

@@ -23,7 +23,8 @@ export default function WisdomStudyPage() {
     setEstudyLauncher,
     setSuiteRouteKey,
     setSuitePassageOverride,
-    suitePassageOverride
+    suitePassageOverride,
+    selectedPlanId
   } = useUIStore();
 
   React.useEffect(() => {
@@ -37,7 +38,7 @@ export default function WisdomStudyPage() {
   const { isLoading: isLoadingPlans } = usePlans();
   const { isLoading: isLoadingAssignments } = useAssignments();
   const { isLoading: isLoadingGroups } = useGroups();
-  const { isLoading: isLoadingSessions } = useSessions(useUIStore.getState().selectedPlanId);
+  const { isLoading: isLoadingSessions } = useSessions(selectedPlanId);
 
   const isDataLoading = loading || isLoadingNotes || isLoadingProgress || isLoadingPlans || isLoadingAssignments || isLoadingGroups || isLoadingSessions;
 
