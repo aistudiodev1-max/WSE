@@ -15,7 +15,7 @@ async function pushToStaging() {
     return;
   }
 
-  console.log('Preparing push to staging...');
+  console.log('Preparing push to staging (preserving history)...');
 
   try {
     console.log(`Cloning ${branch} branch from ${url}...`);
@@ -53,7 +53,7 @@ async function pushToStaging() {
           name: 'AI Coding Agent',
           email: 'agent@ais.dev'
         },
-        message: 'feat: hide empty embed reader and interact via modal'
+        message: 'fix: properly remove isEmbed logic so WSE sidebars are preserved, only hide WEC iframe until user interacts'
       });
       console.log('Changes committed.');
     } catch (e) {

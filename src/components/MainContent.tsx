@@ -19,7 +19,6 @@ export const MainContent: React.FC = () => {
     suitePassageOverride,
     selectedPlanId,
     selectedSessionOrder,
-    isEmbed,
     hasInteractedWithVerse,
     setEstudyLauncher
   } = useUIStore();
@@ -37,7 +36,7 @@ export const MainContent: React.FC = () => {
     [suiteRouteKey, passage, token],
   );
 
-  const shouldShowPrompt = isEmbed && !hasInteractedWithVerse;
+  const shouldShowPrompt = !hasInteractedWithVerse;
 
   return (
     <div

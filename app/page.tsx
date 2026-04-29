@@ -23,7 +23,6 @@ export default function WisdomStudyPage() {
     setEstudyLauncher,
     setSuiteRouteKey,
     setSuitePassageOverride,
-    isEmbed,
     suitePassageOverride
   } = useUIStore();
 
@@ -71,7 +70,7 @@ export default function WisdomStudyPage() {
       <Header />
       
       <main className="flex min-h-0 flex-1 overflow-hidden relative">
-        {!isEmbed && <LeftSidebar />}
+        <LeftSidebar />
 
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex overflow-hidden">
@@ -79,7 +78,7 @@ export default function WisdomStudyPage() {
           </div>
         </div>
 
-        {!isEmbed && <RightSidebar />}
+        <RightSidebar />
       </main>
     </div>
   );

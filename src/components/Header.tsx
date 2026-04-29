@@ -16,11 +16,9 @@ type NavItem = {
 };
 
 export const Header: React.FC = () => {
-  const { activeNav, setActiveNav, isEmbed } = useUIStore();
+  const { activeNav, setActiveNav } = useUIStore();
   const { appUser } = useAuthStore();
   const userName = appUser?.user_name || 'Guest User';
-
-  if (isEmbed) return null;
 
   const navItems: NavItem[] = [
     { name: 'Home', href: 'https://www.wisdomebooksclub.com/' },
