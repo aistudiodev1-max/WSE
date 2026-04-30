@@ -45,28 +45,15 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
           });
         } catch (error) {
           console.error('Failed to fetch profile:', error);
-          // Fallback to mock for testing if explicitly desired, but here we should probably clear auth
-          // setUser(null); setAppUser(null);
+          setUser(null);
+          setAppUser(null);
+          setToken(null);
         } finally {
           setLoading(false);
         }
       } else {
-        // Mock user for testing if no token (legacy behavior for demo)
-        const mockUser = {
-          uid: 'user_01',
-          displayName: 'Demo User'
-        };
-        const mockAppUser: User = {
-          user_id: 'user_01',
-          user_name: 'Demo User',
-          role: 'admin',
-          licensed: true,
-          membership_level: 'Bible Study Plus',
-          church_id: 'church_01',
-          church_name: 'Immanuel Church'
-        };
-        setUser(mockUser);
-        setAppUser(mockAppUser);
+        setUser(null);
+        setAppUser(null);
         setLoading(false);
       }
     };
