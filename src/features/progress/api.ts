@@ -15,10 +15,9 @@ export const progressApi = {
       return localProgress;
     }
   },
-  saveProgress: async (progress: Progress, institutionId = 'default'): Promise<Progress> => {
+  saveProgress: async (progress: Progress, institutionId = 'default', planId = 'default'): Promise<Progress> => {
     try {
       // API expects: is_completed: true for a session or status / progress_percent for plan
-      const planId = 'default'; // In a real app we derive this
       const payload = {
         is_completed: progress.status === 'completed'
       };

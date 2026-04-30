@@ -21,11 +21,11 @@ export const useSaveProgress = () => {
   const institutionId = appUser?.church_id;
 
   return useMutation({
-    mutationFn: (progress: Progress) => progressApi.saveProgress(progress, institutionId!),
+    mutationFn: ({ progress, planId }: { progress: Progress, planId: string }) => progressApi.saveProgress(progress, institutionId!, planId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['progress'] });
       // Also invalidate with specific keys if needed
-      queryClient.invalidateQueries({ queryKey: ['progress', institutionId, variables.group_id] });
+      queryClient.invalidateQueries({ queryKey: ['progress', institutionId, variables.progress.group_id] });
     },
   });
 };

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Sparkles, BookOpen, Library, CheckCircle2, BookMarked, ChevronRight, Layout } from 'lucide-react';
 import { SidebarItem, Card, ProgressCircle } from './SidebarComponents';
 import { useUIStore } from '../store/useUIStore';
@@ -21,7 +21,7 @@ export const LeftSidebar: React.FC = () => {
   const { 
     selectedPlanId, setSelectedPlanId,
     selectedSessionOrder,
-    selectedGroupId,
+    selectedGroupId, setSelectedGroupId,
     setEstudyLauncher
   } = useUIStore();
 
@@ -29,18 +29,33 @@ export const LeftSidebar: React.FC = () => {
   const { data: allAssignments = [] } = useAssignments();
   const { data: allGroups = [] } = useGroups();
   const { data: sessions = [] } = useSessions(selectedPlanId);
-  const { data: userProgress = [] } = useProgress();
+  const { data: userProgress = [] } = useProgress(selectedPlanId);
   const saveProgressMutation = useSaveProgress();
 
   // --- Computed ---
-  const currentGroup = useMemo(() => allGroups.find(g => g.group_id === selectedGroupId) || allGroups[0], [allGroups, selectedGroupId]);
+  const currentGroup = useMemo(() => allGroups.find(g => String(g.group_id) === String(selectedGroupId)) || allGroups[0], [allGroups, selectedGroupId]);
 
+  useEffect(() => {
+    if (currentGroup && currentGroup.group_id !== selectedGroupId) {
+       setSelectedGroupId(currentGroup.group_id);
+    }
+  }, [currentGroup, selectedGroupId, setSelectedGroupId]);
+  
   const assignedPlans = useMemo(() => {
-    const ids = allAssignments.filter(a => a.group_id === selectedGroupId).map(a => a.plan_id);
-    return allPlans.filter(p => ids.includes(p.plan_id));
-  }, [allAssignments, selectedGroupId, allPlans]);
+    // If Assignments API returns plan data, we just map it here 
 
-  const currentPlan = useMemo(() => allPlans.find(p => p.plan_id === selectedPlanId) || assignedPlans[0] || allPlans[0], [selectedPlanId, assignedPlans, allPlans]);
+    // depending on your assignment interface mapping
+    return allPlans.length > 0 ? allPlans : [];
+  }, [allPlans]);
+
+  const currentPlan = useMemo(() => allPlans.find(p => String(p.plan_id) === String(selectedPlanId)) || assignedPlans[0] || allPlans[0], [selectedPlanId, assignedPlans, allPlans]);
+
+  useEffect(() => {
+    if (currentPlan && currentPlan.plan_id !== selectedPlanId) {
+       setSelectedPlanId(currentPlan.plan_id);
+    }
+  }, [currentPlan, selectedPlanId, setSelectedPlanId]);
+
   const session = useMemo(() => sessions.find(s => s.order === selectedSessionOrder) || sessions[0], [sessions, selectedSessionOrder]);
 
   const progressPercent = useMemo(() => {
@@ -65,12 +80,15 @@ export const LeftSidebar: React.FC = () => {
     const exists = userProgress.find(p => p.session_id === session.session_id);
     if (!exists) {
       saveProgressMutation.mutate({
-        progress_id: `prog_${Date.now()}`,
-        user_id: user.uid,
-        group_id: selectedGroupId,
-        session_id: session.session_id,
-        status: 'completed',
-        completed_at: new Date().toISOString()
+        progress: {
+          progress_id: `prog_${Date.now()}`,
+          user_id: user.uid,
+          group_id: selectedGroupId,
+          session_id: session.session_id,
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        },
+        planId: selectedPlanId
       });
     }
   };
