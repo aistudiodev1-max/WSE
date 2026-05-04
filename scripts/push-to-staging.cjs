@@ -57,7 +57,7 @@ async function pushToStaging() {
           name: 'AI Coding Agent',
           email: 'agent@ais.dev'
         },
-        message: 'chore: push latest changes to staging'
+        message: process.argv[2] || 'chore: push latest changes to staging'
       });
       console.log('Changes committed.');
     } catch (e) {

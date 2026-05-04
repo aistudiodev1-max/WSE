@@ -29,7 +29,7 @@ export default function WisdomStudyPage() {
 
   React.useEffect(() => {
     if (!loading && (!user || !appUser) && typeof window !== 'undefined') {
-      window.location.href = 'http://localhost:8000';
+      window.location.href = process.env.NEXT_PUBLIC_LOGIN_REDIRECT_URL || 'http://localhost:8000';
     }
   }, [user, appUser, loading]);
 
