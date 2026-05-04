@@ -11,7 +11,7 @@ import { useAuthStore } from '../features/auth/useAuthStore';
 
 type NavItem = {
   name: string;
-  /** If set, opens in a new tab; does not change active in-app nav (Wisdom Study Engine stays highlighted). */
+  /** If set, redirects in same tab; does not change active in-app nav (Wisdom Study Engine stays highlighted). */
   href?: string;
 };
 
@@ -61,8 +61,6 @@ export const Header: React.FC = () => {
                 <a
                   key={item.name}
                   href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className={`${className} no-underline`}
                 >
                   {item.name}
