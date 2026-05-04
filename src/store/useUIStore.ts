@@ -32,7 +32,7 @@ interface UIState {
 
 export const useUIStore = create<UIState>((set) => ({
   activeNav: 'Wisdom Study Engine',
-  isNotesCollapsed: false,
+  isNotesCollapsed: true,
   selectedPlanId: '8_Week_Prayer',
   selectedSessionOrder: 1,
   selectedGroupId: 'g_new_01',

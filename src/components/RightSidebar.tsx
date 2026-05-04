@@ -97,19 +97,22 @@ export const RightSidebar: React.FC = () => {
 
   return (
     <div className="relative flex h-full">
-      {/* Toggle Button - Floating on the left edge */}
-      <button
-        onClick={onToggleCollapse}
-        className={`absolute top-1/2 -left-4 z-50 transform -translate-y-1/2 w-8 h-12 bg-white border border-zinc-200 shadow-lg rounded-xl flex items-center justify-center text-zinc-400 hover:text-brand-orange transition-all group ${isNotesCollapsed ? 'translate-x-1' : ''}`}
-        title={isNotesCollapsed ? "Expand Notes" : "Collapse Notes"}
-      >
-        <motion.div
-          animate={{ rotate: isNotesCollapsed ? 180 : 0 }}
-          transition={{ type: "spring", stiffness: 200, damping: 20 }}
-        >
-          <BookMarked size={16} className="group-hover:scale-110 transition-transform" />
-        </motion.div>
-      </button>
+      <AnimatePresence>
+        {isNotesCollapsed && (
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleCollapse}
+            className="absolute bottom-6 right-6 z-50 w-14 h-14 bg-brand-orange text-white rounded-full flex items-center justify-center shadow-2xl hover:bg-orange-600 transition-colors"
+            title="Open Notes Engine"
+          >
+            <BookMarked size={24} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <motion.div
         initial={false}
