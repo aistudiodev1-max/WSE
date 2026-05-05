@@ -12,7 +12,10 @@ export interface UserProfileResponse {
       id: number;
       name: string;
     };
-    group_id?: number | string; // Assuming it might be present in some responses
+    institution_groups?: Array<{
+      id: number;
+      name: string;
+    }>;
   };
 }
 
@@ -67,9 +70,9 @@ export const memberApi = {
       user_id: String(user.id),
       user_name: `${user.first_name} ${user.last_name}`.trim(),
       email: user.email,
-      institution_id: String(user.institution_id),
-      institution_name: user.institution.name,
-      group_id: user.group_id ? String(user.group_id) : undefined,
+      institution_id: String(user.institution_id || user.institution?.id),
+      institution_name: user.institution?.name || 'Institution',
+      group_id: user.institution_groups && user.institution_groups.length > 0 ? String(user.institution_groups[0].id) : undefined,
       role: user.roles?.[0]?.name || 'Member',
     };
   },
