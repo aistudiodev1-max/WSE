@@ -8,7 +8,7 @@ export const plansApi = {
       const data = await apiClient(`/api/v2/institutions/${institutionId}/groups/${groupId}/plans`);
       if (data && Array.isArray(data)) {
          return data.map((p: any) => ({
-            plan_id: p.id ? String(p.id) : (p.plan_id || 'unknown'),
+            plan_id: p.plan_id || (p.id ? String(p.id) : 'unknown'),
             title: p.title || p.name || 'Untitled Plan',
             category: p.category || 'General',
             audience: p.audience || 'General',
@@ -32,9 +32,9 @@ export const plansApi = {
       const data = await apiClient(`/api/v2/institutions/${institutionId}/groups/${groupId}/plans`);
       if (data && Array.isArray(data)) {
         return data.map((p: any) => ({
-          assignment_id: `assign_${String(p.id || p.plan_id)}`,
+          assignment_id: `assign_${String(p.plan_id || p.id)}`,
           group_id: groupId,
-          plan_id: String(p.id || p.plan_id),
+          plan_id: String(p.plan_id || p.id),
           assigned_by: 'system',
           assigned_at: new Date().toISOString()
         }));

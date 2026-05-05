@@ -4,7 +4,7 @@ import { Session } from '../../types';
 import { useAuthStore } from '../auth/useAuthStore';
 import { useUIStore } from '../../store/useUIStore';
 
-export const useSessions = (planId: string) => {
+export const useSessions = (planId: string | null) => {
   const appUser = useAuthStore((state) => state.appUser);
   const selectedGroupId = useUIStore((state) => state.selectedGroupId);
   const institutionId = appUser?.church_id;
@@ -12,7 +12,7 @@ export const useSessions = (planId: string) => {
 
   return useQuery<Session[], Error>({
     queryKey: ['sessions', planId, institutionId, groupId],
-    queryFn: () => sessionsApi.getSessions(planId, institutionId!, groupId!),
+    queryFn: () => sessionsApi.getSessions(planId!, institutionId!, groupId!),
     enabled: !!planId && !!institutionId && !!groupId,
   });
 };

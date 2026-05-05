@@ -5,7 +5,7 @@ import { NoteType, Visibility } from '../types';
 interface UIState {
   activeNav: string;
   isNotesCollapsed: boolean;
-  selectedPlanId: string;
+  selectedPlanId: string | null;
   selectedSessionOrder: number;
   selectedGroupId: string | null;
   activeNoteType: NoteType;
@@ -18,7 +18,7 @@ interface UIState {
 
   setActiveNav: (nav: string) => void;
   setNotesCollapsed: (collapsed: boolean) => void;
-  setSelectedPlanId: (id: string) => void;
+  setSelectedPlanId: (id: string | null) => void;
   setSelectedSessionOrder: (order: number) => void;
   setSelectedGroupId: (id: string | null) => void;
   setActiveNoteType: (type: NoteType) => void;
@@ -33,7 +33,7 @@ interface UIState {
 export const useUIStore = create<UIState>((set) => ({
   activeNav: 'Wisdom Study Engine',
   isNotesCollapsed: true,
-  selectedPlanId: '8_Week_Prayer',
+  selectedPlanId: null,
   selectedSessionOrder: 1,
   selectedGroupId: null,
   activeNoteType: 'session',

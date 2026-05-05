@@ -4,7 +4,7 @@ import { Progress } from '../../types';
 import { useAuthStore } from '../auth/useAuthStore';
 import { useUIStore } from '../../store/useUIStore';
 
-export const useProgress = (planId = 'default') => {
+export const useProgress = (planId: string | null = null) => {
   const appUser = useAuthStore((state) => state.appUser);
   const selectedGroupId = useUIStore((state) => state.selectedGroupId);
   const institutionId = appUser?.church_id;
@@ -12,8 +12,8 @@ export const useProgress = (planId = 'default') => {
 
   return useQuery<Progress[], Error>({
     queryKey: ['progress', institutionId, groupId, planId],
-    queryFn: () => progressApi.getProgress(institutionId!, groupId!, planId),
-    enabled: !!institutionId && !!groupId,
+    queryFn: () => progressApi.getProgress(institutionId!, groupId!, planId!),
+    enabled: !!institutionId && !!groupId && !!planId,
   });
 };
 

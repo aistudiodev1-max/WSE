@@ -69,7 +69,7 @@ export const LeftSidebar: React.FC = () => {
   const permissions = useMemo(() => resolvePermissions(context), [context]);
 
   const handleComplete = async () => {
-    if (!permissions.can_track_progress || !user || !session || !selectedGroupId) return;
+    if (!permissions.can_track_progress || !user || !session || !selectedGroupId || !selectedPlanId) return;
     const exists = userProgress.find(p => p.session_id === session.session_id);
     if (!exists) {
       saveProgressMutation.mutate({
