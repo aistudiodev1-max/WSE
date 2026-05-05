@@ -12,7 +12,7 @@ import { useAuthStore } from '../features/auth/useAuthStore';
 import { useNotes, useSaveNote, useDeleteNote } from '../features/notes/hooks';
 import { usePlans } from '../features/plans/hooks';
 import { useSessions } from '../features/sessions/hooks';
-import { useGroups } from '../features/groups/hooks';
+import { useMyGroups } from '../features/groups/hooks';
 import { getRoleInGroup } from '../utils/permissions';
 
 type SortOption = 'newest' | 'oldest' | 'type';
@@ -32,7 +32,7 @@ export const RightSidebar: React.FC = () => {
   const { data: notes = [] } = useNotes();
   const { data: allPlans = [] } = usePlans();
   const { data: sessions = [] } = useSessions(selectedPlanId);
-  const { data: allGroups = [] } = useGroups();
+  const { data: myGroups = [] } = useMyGroups();
 
   const saveNoteMutation = useSaveNote();
   const deleteNoteMutation = useDeleteNote();
@@ -41,7 +41,7 @@ export const RightSidebar: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
 
   // --- Computed ---
-  const currentGroup = useMemo(() => allGroups.find(g => g.group_id === selectedGroupId) || allGroups[0], [allGroups, selectedGroupId]);
+  const currentGroup = useMemo(() => myGroups.find(g => g.group_id === selectedGroupId) || myGroups[0], [myGroups, selectedGroupId]);
   const currentPlan = useMemo(() => allPlans.find(p => p.plan_id === selectedPlanId), [allPlans, selectedPlanId]);
   const currentSession = useMemo(() => sessions.find(s => s.order === selectedSessionOrder) || sessions[0], [sessions, selectedSessionOrder]);
 
@@ -74,7 +74,7 @@ export const RightSidebar: React.FC = () => {
 
   // --- Handlers ---
   const handleSaveNote = async () => {
-    if (!noteContent.trim() || !user || !currentPlan || !currentSession) return;
+    if (!noteContent.trim() || !user || !currentPlan || !currentSession || !selectedGroupId) return;
     const noteData: AppNote = {
       note_id: `note_${Date.now()}`,
       user_id: user.uid,

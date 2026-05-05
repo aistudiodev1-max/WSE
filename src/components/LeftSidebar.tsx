@@ -13,8 +13,7 @@ import { useSessions } from '../features/sessions/hooks';
 import { useProgress, useSaveProgress } from '../features/progress/hooks';
 import { resolvePermissions } from '../utils/permissions';
 import { getRoleInGroup } from '../utils/permissions';
-import { Group } from '../types';
-import { useGroups } from '../features/groups/hooks';
+import { useMyGroups } from '../features/groups/hooks';
 
 export const LeftSidebar: React.FC = () => {
   const { user, appUser } = useAuthStore();
@@ -27,19 +26,13 @@ export const LeftSidebar: React.FC = () => {
 
   const { data: allPlans = [] } = usePlans();
   const { data: allAssignments = [] } = useAssignments();
-  const { data: allGroups = [] } = useGroups();
+  const { data: myGroups = [] } = useMyGroups();
   const { data: sessions = [] } = useSessions(selectedPlanId);
   const { data: userProgress = [] } = useProgress(selectedPlanId);
   const saveProgressMutation = useSaveProgress();
 
   // --- Computed ---
-  const currentGroup = useMemo(() => allGroups.find(g => String(g.group_id) === String(selectedGroupId)) || allGroups[0], [allGroups, selectedGroupId]);
-
-  useEffect(() => {
-    if (currentGroup && currentGroup.group_id !== selectedGroupId) {
-       setSelectedGroupId(currentGroup.group_id);
-    }
-  }, [currentGroup, selectedGroupId, setSelectedGroupId]);
+  const currentGroup = useMemo(() => myGroups.find(g => String(g.group_id) === String(selectedGroupId)), [myGroups, selectedGroupId]);
   
   const assignedPlans = useMemo(() => {
     // If Assignments API returns plan data, we just map it here 
@@ -76,7 +69,7 @@ export const LeftSidebar: React.FC = () => {
   const permissions = useMemo(() => resolvePermissions(context), [context]);
 
   const handleComplete = async () => {
-    if (!permissions.can_track_progress || !user || !session) return;
+    if (!permissions.can_track_progress || !user || !session || !selectedGroupId) return;
     const exists = userProgress.find(p => p.session_id === session.session_id);
     if (!exists) {
       saveProgressMutation.mutate({

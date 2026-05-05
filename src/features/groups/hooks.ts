@@ -3,6 +3,17 @@ import { groupsApi } from './api';
 import { Group } from '../../types';
 import { useAuthStore } from '../auth/useAuthStore';
 
+export const useMyGroups = () => {
+  const appUser = useAuthStore((state) => state.appUser);
+  const institutionId = appUser?.church_id;
+
+  return useQuery<Group[], Error>({
+    queryKey: ['my_groups', institutionId],
+    queryFn: () => groupsApi.getMyGroups(institutionId!),
+    enabled: !!institutionId,
+  });
+};
+
 export const useGroups = () => {
   const appUser = useAuthStore((state) => state.appUser);
   const institutionId = appUser?.church_id;

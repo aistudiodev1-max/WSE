@@ -3,6 +3,26 @@ import { initialGroups } from '../../data';
 import { Group } from '../../types';
 
 export const groupsApi = {
+  getMyGroups: async (institutionId: string): Promise<Group[]> => {
+    try {
+      const data = await apiClient(`/api/v2/institutions/${institutionId}/groups/my`);
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map((g: any) => ({
+          group_id: String(g.id || g.group_id),
+          group_name: g.name || g.group_name || 'Unnamed Group',
+          church_id: institutionId,
+          church_name: g.institution_name || 'Institution',
+          group_override: 'none',
+          members: g.members ? g.members.map((m: any) => String(m.id || m)) : [],
+          role_overrides: {}
+        }));
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  },
+  
   getGroups: async (institutionId: string): Promise<Group[]> => {
     try {
       const data = await apiClient(`/api/v2/institutions/${institutionId}/groups`);

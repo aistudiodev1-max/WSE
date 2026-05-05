@@ -7,7 +7,7 @@ interface UIState {
   isNotesCollapsed: boolean;
   selectedPlanId: string;
   selectedSessionOrder: number;
-  selectedGroupId: string;
+  selectedGroupId: string | null;
   activeNoteType: NoteType;
   noteContent: string;
   noteVisibility: Visibility;
@@ -20,7 +20,7 @@ interface UIState {
   setNotesCollapsed: (collapsed: boolean) => void;
   setSelectedPlanId: (id: string) => void;
   setSelectedSessionOrder: (order: number) => void;
-  setSelectedGroupId: (id: string) => void;
+  setSelectedGroupId: (id: string | null) => void;
   setActiveNoteType: (type: NoteType) => void;
   setNoteContent: (content: string) => void;
   setNoteVisibility: (visibility: Visibility) => void;
@@ -35,7 +35,7 @@ export const useUIStore = create<UIState>((set) => ({
   isNotesCollapsed: true,
   selectedPlanId: '8_Week_Prayer',
   selectedSessionOrder: 1,
-  selectedGroupId: 'g_new_01',
+  selectedGroupId: null,
   activeNoteType: 'session',
   noteContent: '',
   noteVisibility: 'private',

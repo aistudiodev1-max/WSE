@@ -2,19 +2,12 @@
 
 import React from 'react';
 import { Header } from '../src/components/Header';
-import { LeftSidebar } from '../src/components/LeftSidebar';
-import { RightSidebar } from '../src/components/RightSidebar';
-import { MainContent } from '../src/components/MainContent';
+import { GroupSelection } from '../src/components/GroupSelection';
+import { StudyEngine } from '../src/components/StudyEngine';
 import { EstudyLauncherModal } from '../src/components/EstudyLauncherModal';
 import { useAuthStore } from '../src/features/auth/useAuthStore';
 import { useUIStore } from '../src/store/useUIStore';
-import { useNotes } from '../src/features/notes/hooks';
-import { useProgress } from '../src/features/progress/hooks';
-import { usePlans, useAssignments } from '../src/features/plans/hooks';
-import { useGroups } from '../src/features/groups/hooks';
-import { useSessions } from '../src/features/sessions/hooks';
 import { EstudySuiteRouteKey } from '../src/utils/estudyUrls';
-import { BookOpen } from 'lucide-react';
 
 export default function WisdomStudyPage() {
   const { user, appUser, loading } = useAuthStore();
@@ -23,8 +16,7 @@ export default function WisdomStudyPage() {
     setEstudyLauncher,
     setSuiteRouteKey,
     setSuitePassageOverride,
-    suitePassageOverride,
-    selectedPlanId
+    selectedGroupId
   } = useUIStore();
 
   React.useEffect(() => {
@@ -32,15 +24,6 @@ export default function WisdomStudyPage() {
       window.location.href = process.env.NEXT_PUBLIC_LOGIN_REDIRECT_URL || 'http://localhost:8000';
     }
   }, [user, appUser, loading]);
-
-  const { isLoading: isLoadingNotes } = useNotes();
-  const { isLoading: isLoadingProgress } = useProgress();
-  const { isLoading: isLoadingPlans } = usePlans();
-  const { isLoading: isLoadingAssignments } = useAssignments();
-  const { isLoading: isLoadingGroups } = useGroups();
-  const { isLoading: isLoadingSessions } = useSessions(selectedPlanId);
-
-  const isDataLoading = loading || isLoadingNotes || isLoadingProgress || isLoadingPlans || isLoadingAssignments || isLoadingGroups || isLoadingSessions;
 
   const closeEstudyLauncher = () => setEstudyLauncher({ open: false, verseRef: '' });
 
@@ -52,7 +35,7 @@ export default function WisdomStudyPage() {
     closeEstudyLauncher();
   };
 
-  if (isDataLoading) return (
+  if (loading) return (
     <div className="min-h-screen bg-brand-dark flex items-center justify-center">
        <div className="w-12 h-12 border-4 border-brand-orange border-t-transparent rounded-full animate-spin" />
     </div>
@@ -70,17 +53,11 @@ export default function WisdomStudyPage() {
       />
       <Header />
       
-      <main className="flex min-h-0 flex-1 overflow-hidden relative">
-        <LeftSidebar />
-
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 flex overflow-hidden">
-            <MainContent />
-          </div>
-        </div>
-
-        <RightSidebar />
-      </main>
+      {!selectedGroupId ? (
+        <GroupSelection />
+      ) : (
+        <StudyEngine />
+      )}
     </div>
   );
 }

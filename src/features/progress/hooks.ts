@@ -2,11 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { progressApi } from './api';
 import { Progress } from '../../types';
 import { useAuthStore } from '../auth/useAuthStore';
+import { useUIStore } from '../../store/useUIStore';
 
 export const useProgress = (planId = 'default') => {
   const appUser = useAuthStore((state) => state.appUser);
+  const selectedGroupId = useUIStore((state) => state.selectedGroupId);
   const institutionId = appUser?.church_id;
-  const groupId = appUser?.group_id || appUser?.church_id;
+  const groupId = selectedGroupId || appUser?.group_id || appUser?.church_id;
 
   return useQuery<Progress[], Error>({
     queryKey: ['progress', institutionId, groupId, planId],
