@@ -78,6 +78,26 @@ export const memberApi = {
   },
 
   /**
+   * View the group (v2)
+   */
+  getGroup: async (
+    institution: string,
+    group: string
+  ): Promise<any> => {
+    return apiClient(`/api/v2/institutions/${institution}/groups/${group}`);
+  },
+
+  /**
+   * List plans assigned to the group (v2)
+   */
+  getGroupPlans: async (
+    institution: string,
+    group: string
+  ): Promise<any[]> => {
+    return apiClient(`/api/v2/institutions/${institution}/groups/${group}/plans`);
+  },
+
+  /**
    * List sessions for a group plan (v2)
    */
   getGroupPlanSessions: async (
