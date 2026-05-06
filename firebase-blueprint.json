@@ -16,7 +16,6 @@
       "description": "User generated notes for sessions, verses, or plans.",
       "type": "object",
       "properties": {
-        "institutionId": { "type": "string" },
         "userId": { "type": "string" },
         "groupId": { "type": "string" },
         "planId": { "type": "string" },
@@ -28,7 +27,7 @@
         "createdAt": { "type": "number" },
         "updatedAt": { "type": "number" }
       },
-      "required": ["institutionId", "userId", "groupId", "planId", "noteType", "content", "visibility", "createdAt", "updatedAt"]
+      "required": ["userId", "groupId", "planId", "noteType", "content", "visibility", "createdAt", "updatedAt"]
     }
   },
   "firestore": {
@@ -36,9 +35,9 @@
       "schema": { "$ref": "#/entities/User" },
       "description": "Stores user profiles."
     },
-    "/institutions/{institutionId}/notes/{noteId}": {
+    "/notes/{noteId}": {
       "schema": { "$ref": "#/entities/Note" },
-      "description": "Notes collection organized by institution."
+      "description": "Notes collection."
     }
   }
 }

@@ -5,8 +5,6 @@ import { useAuthStore } from './useAuthStore';
 import { useUIStore } from '../../store/useUIStore';
 import { User } from '../../types';
 import { memberApi } from '../member/api/memberApi';
-import { signInAnonymously } from 'firebase/auth';
-import { auth as firebaseAuth } from '../../lib/firebase';
 
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
   const { setUser, setAppUser, setToken, setLoading } = useAuthStore();
@@ -40,12 +38,6 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
 
       if (currentToken) {
         try {
-          try {
-            await signInAnonymously(firebaseAuth);
-          } catch (fbError) {
-            console.warn('Firebase anonymous sign in failed.', fbError);
-          }
-
           const profile = await memberApi.getProfile();
           setUser({ uid: profile.user_id, displayName: profile.user_name });
           setAppUser({
