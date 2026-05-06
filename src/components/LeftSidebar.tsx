@@ -107,6 +107,9 @@ export const LeftSidebar: React.FC = () => {
         },
         planId: selectedPlanId
       });
+      if (hasNext) {
+        setSelectedSessionOrder(sessions[currentIndex + 1].order);
+      }
     }
   };
 
