@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { Sparkles, BookOpen, Library, CheckCircle2, BookMarked, ChevronRight, ChevronLeft, Layout } from 'lucide-react';
 import { SidebarItem, Card, ProgressCircle } from './SidebarComponents';
 import { useUIStore } from '../store/useUIStore';
@@ -28,6 +28,20 @@ export const LeftSidebar: React.FC = () => {
   const { data: allAssignments = [] } = useAssignments();
   const { data: myGroups = [] } = useMyGroups();
   const { data: sessions = [] } = useSessions(selectedPlanId);
+
+  const lastAutoSelectedPlanRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (sessions.length > 0 && selectedPlanId && lastAutoSelectedPlanRef.current !== selectedPlanId) {
+      const firstIncomplete = sessions.find(s => !s.is_completed);
+      if (firstIncomplete) {
+        setSelectedSessionOrder(firstIncomplete.order);
+      } else {
+        setSelectedSessionOrder(sessions[0].order);
+      }
+      lastAutoSelectedPlanRef.current = selectedPlanId;
+    }
+  }, [sessions, selectedPlanId, setSelectedSessionOrder]);
 
   // --- Computed ---
   const currentGroup = useMemo(() => myGroups.find(g => String(g.group_id) === String(selectedGroupId)), [myGroups, selectedGroupId]);
