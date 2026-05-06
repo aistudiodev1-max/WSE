@@ -3,8 +3,10 @@
 import { useEffect } from 'react';
 import { useAuthStore } from './useAuthStore';
 import { useUIStore } from '../../store/useUIStore';
-import { User } from '../../types';
 import { memberApi } from '../member/api/memberApi';
+import { apiClient } from '../../lib/apiClient';
+import { auth as firebaseAuth } from '../../lib/firebase';
+import { signInWithCustomToken } from 'firebase/auth';
 
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
   const { setUser, setAppUser, setToken, setLoading } = useAuthStore();
@@ -38,6 +40,7 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
 
       if (currentToken) {
         try {
+          // 1. Fetch Profile
           const profile = await memberApi.getProfile();
           setUser({ uid: profile.user_id, displayName: profile.user_name });
           setAppUser({
@@ -50,6 +53,20 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
             church_name: profile.institution_name,
             group_id: profile.group_id
           });
+
+          // 2. Sync with Firebase using custom token
+          try {
+            const fbCustomTokenRes = await apiClient('/api/v2/firebase/custom-token', { method: 'POST' });
+            if (fbCustomTokenRes && fbCustomTokenRes.token) {
+              await signInWithCustomToken(firebaseAuth, fbCustomTokenRes.token);
+              console.log('Firebase auth successful using custom token.');
+            } else {
+               console.warn('Did not receive a token from /api/v2/firebase/custom-token');
+            }
+          } catch (fbError) {
+            console.error('Failed to obtain or sign in with Firebase custom token:', fbError);
+          }
+
         } catch (error) {
           console.error('Failed to fetch profile:', error);
           setUser(null);
