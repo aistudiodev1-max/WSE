@@ -7,9 +7,11 @@ export const sessionsApi = {
     try {
       // Try v2 member endpoint first
       const data = await apiClient(`/api/v2/institutions/${institutionId}/groups/${groupId}/plans/${planId}/sessions`);
-      if (data && Array.isArray(data)) {
+      const sessionsData = data?.sessions || (Array.isArray(data) ? data : null);
+      
+      if (sessionsData && Array.isArray(sessionsData)) {
         // Map v2 MemberSession to v1 Session if needed
-        return data.map((s: any) => ({
+        return sessionsData.map((s: any) => ({
           session_id: s.session_id,
           plan_id: s.plan_id,
           title: s.title,
