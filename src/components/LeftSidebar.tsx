@@ -10,7 +10,7 @@ import { useUIStore } from '../store/useUIStore';
 import { useAuthStore } from '../features/auth/useAuthStore';
 import { usePlans, useAssignments } from '../features/plans/hooks';
 import { useSessions } from '../features/sessions/hooks';
-import { useProgress, useSaveProgress } from '../features/progress/hooks';
+import { useSaveProgress } from '../features/progress/hooks';
 import { resolvePermissions } from '../utils/permissions';
 import { getRoleInGroup } from '../utils/permissions';
 import { useMyGroups } from '../features/groups/hooks';
@@ -28,7 +28,6 @@ export const LeftSidebar: React.FC = () => {
   const { data: allAssignments = [] } = useAssignments();
   const { data: myGroups = [] } = useMyGroups();
   const { data: sessions = [] } = useSessions(selectedPlanId);
-  const { data: userProgress = [] } = useProgress(selectedPlanId);
 
   // --- Computed ---
   const currentGroup = useMemo(() => myGroups.find(g => String(g.group_id) === String(selectedGroupId)), [myGroups, selectedGroupId]);
@@ -62,11 +61,8 @@ export const LeftSidebar: React.FC = () => {
   };
 
   const completedCount = useMemo(() => {
-    return userProgress.filter(p => 
-      sessions.some(s => s.session_id === p.session_id) && 
-      p.status === 'completed'
-    ).length;
-  }, [userProgress, sessions]);
+    return sessions.filter(s => s.is_completed).length;
+  }, [sessions]);
 
   const progressPercent = useMemo(() => {
     if (!sessions.length) return 0;
@@ -85,8 +81,7 @@ export const LeftSidebar: React.FC = () => {
 
   const handleComplete = async () => {
     if (!permissions.can_track_progress || !user || !session || !selectedGroupId || !selectedPlanId) return;
-    const exists = userProgress.find(p => p.session_id === session.session_id);
-    if (!exists) {
+    if (!session.is_completed) {
       saveProgressMutation.mutate({
         progress: {
           progress_id: `prog_${Date.now()}`,
@@ -122,7 +117,7 @@ export const LeftSidebar: React.FC = () => {
         <div className="flex items-center justify-center w-full pb-2">
           <div className="flex flex-wrap items-center justify-center gap-y-2">
             {sessions.map((s, idx) => {
-              const isCompleted = userProgress.some(p => p.session_id === s.session_id && p.status === 'completed');
+              const isCompleted = s.is_completed;
               const isActive = s.session_id === session?.session_id;
               
               return (
@@ -241,13 +236,13 @@ export const LeftSidebar: React.FC = () => {
         <button 
           onClick={handleComplete}
           className={`flex-1 h-14 rounded-full flex items-center justify-center gap-2 font-black transition-all group shadow-lg active:scale-95 ${
-            progressPercent === 100 
+            session?.is_completed 
               ? 'bg-emerald-100 text-emerald-700 cursor-default' 
               : 'bg-brand-teal hover:bg-[#86d4c5] text-[#1a5b4e] shadow-emerald-200/50'
           }`}
         >
-          <CheckCircle2 size={20} className={progressPercent === 100 ? 'text-emerald-500' : ''} />
-          {progressPercent === 100 ? 'SESSION COMPLETED' : 'MARK COMPLETED'}
+          <CheckCircle2 size={20} className={session?.is_completed ? 'text-emerald-500' : ''} />
+          {session?.is_completed ? 'SESSION COMPLETED' : 'MARK COMPLETED'}
         </button>
         <button 
           onClick={handleNext} 

@@ -20,7 +20,9 @@ export const sessionsApi = {
           primary_verse: s.primary_verse,
           supporting_verses: s.supporting_verses || [],
           teaching: s.teaching_text || '',
-          reflection: s.reflection_prompt || ''
+          reflection: s.reflection_prompt || '',
+          is_completed: !!s.is_completed,
+          completed_at: s.completed_at || null
         }));
       }
       return initialSessions[planId] || [];

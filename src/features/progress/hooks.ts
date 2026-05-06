@@ -26,8 +26,10 @@ export const useSaveProgress = (sessionsCount = 1, completedCount = 0) => {
     mutationFn: ({ progress, planId }: { progress: Progress, planId: string }) => progressApi.saveProgress(progress, institutionId!, planId, sessionsCount, completedCount),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['progress'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
       // Also invalidate with specific keys if needed
       queryClient.invalidateQueries({ queryKey: ['progress', institutionId, variables.progress.group_id] });
+      queryClient.invalidateQueries({ queryKey: ['sessions', variables.planId, institutionId, variables.progress.group_id] });
     },
   });
 };

@@ -49,6 +49,8 @@ export interface Session {
   supporting_verses: string[];
   teaching: string;
   reflection: string;
+  is_completed?: boolean;
+  completed_at?: string | null;
 }
 
 export interface Assignment {
