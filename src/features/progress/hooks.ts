@@ -17,13 +17,13 @@ export const useProgress = (planId: string | null = null) => {
   });
 };
 
-export const useSaveProgress = () => {
+export const useSaveProgress = (sessionsCount = 1, completedCount = 0) => {
   const queryClient = useQueryClient();
   const appUser = useAuthStore((state) => state.appUser);
   const institutionId = appUser?.church_id;
 
   return useMutation({
-    mutationFn: ({ progress, planId }: { progress: Progress, planId: string }) => progressApi.saveProgress(progress, institutionId!, planId),
+    mutationFn: ({ progress, planId }: { progress: Progress, planId: string }) => progressApi.saveProgress(progress, institutionId!, planId, sessionsCount, completedCount),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['progress'] });
       // Also invalidate with specific keys if needed

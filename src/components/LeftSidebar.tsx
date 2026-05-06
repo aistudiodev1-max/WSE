@@ -19,7 +19,7 @@ export const LeftSidebar: React.FC = () => {
   const { user, appUser } = useAuthStore();
   const { 
     selectedPlanId, setSelectedPlanId,
-    selectedSessionOrder,
+    selectedSessionOrder, setSelectedSessionOrder,
     selectedGroupId, setSelectedGroupId,
     setEstudyLauncher
   } = useUIStore();
@@ -29,7 +29,6 @@ export const LeftSidebar: React.FC = () => {
   const { data: myGroups = [] } = useMyGroups();
   const { data: sessions = [] } = useSessions(selectedPlanId);
   const { data: userProgress = [] } = useProgress(selectedPlanId);
-  const saveProgressMutation = useSaveProgress();
 
   // --- Computed ---
   const currentGroup = useMemo(() => myGroups.find(g => String(g.group_id) === String(selectedGroupId)), [myGroups, selectedGroupId]);
@@ -51,14 +50,19 @@ export const LeftSidebar: React.FC = () => {
 
   const session = useMemo(() => sessions.find(s => s.order === selectedSessionOrder) || sessions[0], [sessions, selectedSessionOrder]);
 
-  const progressPercent = useMemo(() => {
-    if (!sessions.length) return 0;
-    const completed = userProgress.filter(p => 
+  const completedCount = useMemo(() => {
+    return userProgress.filter(p => 
       sessions.some(s => s.session_id === p.session_id) && 
       p.status === 'completed'
     ).length;
-    return Math.round((completed / sessions.length) * 100);
   }, [userProgress, sessions]);
+
+  const progressPercent = useMemo(() => {
+    if (!sessions.length) return 0;
+    return Math.round((completedCount / sessions.length) * 100);
+  }, [completedCount, sessions]);
+  
+  const saveProgressMutation = useSaveProgress(sessions.length, completedCount);
 
   const context = useMemo(() => ({
     role_in_group: (appUser && currentGroup) ? getRoleInGroup(appUser, currentGroup) : 'member',
@@ -105,16 +109,32 @@ export const LeftSidebar: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          <div className="flex items-center">
-            <div className="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-sm ring-4 ring-emerald-50">
-              <CheckCircle2 size={16} />
-            </div>
-            <div className="w-8 h-[2px] bg-emerald-200 mx-0.5" />
-            <div className="w-7 h-7 border-2 border-zinc-200 rounded-full flex items-center justify-center text-xs font-black text-zinc-400 bg-white">
-              2
-            </div>
+          <div className="flex flex-wrap items-center gap-y-2">
+            {sessions.map((s, idx) => {
+              const isCompleted = userProgress.some(p => p.session_id === s.session_id && p.status === 'completed');
+              const isActive = s.session_id === session?.session_id;
+              
+              return (
+                <React.Fragment key={s.session_id}>
+                  <button
+                    onClick={() => setSelectedSessionOrder(s.order)}
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all shadow-sm active:scale-95 ${
+                      isCompleted 
+                        ? 'bg-emerald-500 text-white ring-4 ring-emerald-50'
+                        : isActive
+                          ? 'border-2 border-brand-orange text-brand-orange bg-brand-orange/10 ring-4 ring-orange-50'
+                          : 'border-2 border-zinc-200 text-zinc-400 bg-white hover:border-zinc-300'
+                    }`}
+                  >
+                    {isCompleted ? <CheckCircle2 size={16} /> : idx + 1}
+                  </button>
+                  {idx < sessions.length - 1 && (
+                     <div className={`w-4 sm:w-6 h-[2px] mx-0.5 ${isCompleted ? 'bg-emerald-200' : 'bg-zinc-200'}`} />
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-auto underline decoration-brand-orange decoration-2 underline-offset-4">Track Progress</span>
         </div>
       </div>
 
@@ -172,20 +192,22 @@ export const LeftSidebar: React.FC = () => {
             </div>
           </Card>
 
-          <SidebarItem title="Supporting Verses" count={session?.supporting_verses.length || 0} icon={Library} isOpen={true}>
-             <div className="grid grid-cols-1 gap-2 mt-2">
-                {session?.supporting_verses.map(v => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => onOpenEstudyLauncher(v)}
-                    className="text-left px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-[10px] font-bold text-zinc-600 hover:bg-brand-sepia hover:border-brand-orange transition-all shadow-sm active:scale-95"
-                  >
-                    {v}
-                  </button>
-                ))}
-             </div>
-          </SidebarItem>
+          {session?.supporting_verses && session.supporting_verses.length > 0 && (
+            <SidebarItem title="Supporting Verses" count={session.supporting_verses.length} icon={Library} isOpen={true}>
+               <div className="grid grid-cols-1 gap-2 mt-2">
+                  {session.supporting_verses.map((v: string) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => onOpenEstudyLauncher(v)}
+                      className="text-left px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-[10px] font-bold text-zinc-600 hover:bg-brand-sepia hover:border-brand-orange transition-all shadow-sm active:scale-95"
+                    >
+                      {v}
+                    </button>
+                  ))}
+               </div>
+            </SidebarItem>
+          )}
 
           <SidebarItem title="Reflection Tool" icon={Sparkles}>
             <div className="p-4 bg-zinc-50 rounded-2xl border-2 border-brand-orange/10 shadow-inner">

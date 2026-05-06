@@ -15,17 +15,33 @@ export const progressApi = {
       return localProgress;
     }
   },
-  saveProgress: async (progress: Progress, institutionId = 'default', planId = 'default'): Promise<Progress> => {
+  saveProgress: async (progress: Progress, institutionId = 'default', planId = 'default', sessionsCount = 1, completedCount = 0): Promise<Progress> => {
     try {
-      // API expects: is_completed: true for a session or status / progress_percent for plan
-      const payload = {
+      // First, update the session progress
+      const sessionPayload = {
         is_completed: progress.status === 'completed'
       };
       
       await apiClient(`/api/v2/institutions/${institutionId}/groups/${progress.group_id}/plans/${planId}/sessions/${progress.session_id}/progress`, {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(sessionPayload)
       });
+
+      // Recalculate percent after marking this session complete
+      const newCompletedCount = progress.status === 'completed' ? completedCount + 1 : completedCount;
+      const progressPercent = sessionsCount > 0 ? Math.round((newCompletedCount / sessionsCount) * 100) : 0;
+      
+      // Update plan progress
+      const planPayload = {
+        status: progressPercent === 100 ? 'completed' : 'in_progress',
+        progress_percent: progressPercent
+      };
+
+      await apiClient(`/api/v2/institutions/${institutionId}/groups/${progress.group_id}/plans/${planId}/progress`, {
+        method: 'POST',
+        body: JSON.stringify(planPayload)
+      });
+
       localProgress = [...localProgress, progress];
       return progress;
     } catch {
