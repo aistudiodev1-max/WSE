@@ -21,11 +21,18 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
         if (urlToken) {
           currentToken = urlToken;
           setToken(urlToken);
+          sessionStorage.setItem('wse_auth_token', urlToken);
           // Cleanup URL params
           params.delete('token');
           params.delete('access_token');
           const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
           window.history.replaceState(null, '', newUrl);
+        } else if (!currentToken) {
+          const storedToken = sessionStorage.getItem('wse_auth_token');
+          if (storedToken) {
+             currentToken = storedToken;
+             setToken(storedToken);
+          }
         }
       }
 
@@ -48,6 +55,9 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
           setUser(null);
           setAppUser(null);
           setToken(null);
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('wse_auth_token');
+          }
         } finally {
           setLoading(false);
         }

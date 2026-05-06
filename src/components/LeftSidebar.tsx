@@ -225,17 +225,26 @@ export const LeftSidebar: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 border-t border-zinc-200 bg-white flex items-center gap-2">
-        <button 
-          onClick={handlePrev} 
-          disabled={!hasPrev} 
-          className="w-14 h-14 rounded-full flex items-center justify-center bg-zinc-50 border border-zinc-200 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-all disabled:opacity-30 disabled:pointer-events-none shrink-0"
-        >
-          <ChevronLeft size={24} />
-        </button>
+      <div className="p-4 border-t border-zinc-200 bg-white flex flex-col gap-3">
+        <div className="flex gap-2">
+          <button 
+            onClick={handlePrev} 
+            disabled={!hasPrev} 
+            className="flex-1 h-12 rounded-xl flex items-center justify-center gap-2 bg-zinc-50 border border-zinc-200 text-zinc-500 font-bold text-xs hover:bg-zinc-100 hover:text-zinc-700 transition-all disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ChevronLeft size={16} /> PREVIOUS
+          </button>
+          <button 
+            onClick={handleNext} 
+            disabled={!hasNext} 
+            className="flex-1 h-12 rounded-xl flex items-center justify-center gap-2 bg-zinc-50 border border-zinc-200 text-zinc-500 font-bold text-xs hover:bg-zinc-100 hover:text-zinc-700 transition-all disabled:opacity-30 disabled:pointer-events-none"
+          >
+            NEXT <ChevronRight size={16} />
+          </button>
+        </div>
         <button 
           onClick={handleComplete}
-          className={`flex-1 h-14 rounded-full flex items-center justify-center gap-2 font-black transition-all group shadow-lg active:scale-95 ${
+          className={`w-full h-14 rounded-full flex items-center justify-center gap-2 font-black transition-all group shadow-lg active:scale-[0.98] ${
             session?.is_completed 
               ? 'bg-emerald-100 text-emerald-700 cursor-default' 
               : 'bg-brand-teal hover:bg-[#86d4c5] text-[#1a5b4e] shadow-emerald-200/50'
@@ -243,13 +252,6 @@ export const LeftSidebar: React.FC = () => {
         >
           <CheckCircle2 size={20} className={session?.is_completed ? 'text-emerald-500' : ''} />
           {session?.is_completed ? 'SESSION COMPLETED' : 'MARK COMPLETED'}
-        </button>
-        <button 
-          onClick={handleNext} 
-          disabled={!hasNext} 
-          className="w-14 h-14 rounded-full flex items-center justify-center bg-zinc-50 border border-zinc-200 text-zinc-400 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange transition-all disabled:opacity-30 disabled:pointer-events-none shrink-0"
-        >
-          <ChevronRight size={24} />
         </button>
       </div>
     </div>
