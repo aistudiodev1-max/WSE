@@ -9,7 +9,6 @@ import { useUIStore } from '../store/useUIStore';
 import { useAuthStore } from '../features/auth/useAuthStore';
 import { useSessions } from '../features/sessions/hooks';
 import { usePlans } from '../features/plans/hooks';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const WISDOM_STUDY_ENGINE = 'Wisdom Study Engine';
 
@@ -29,22 +28,6 @@ export const MainContent: React.FC = () => {
 
   const { data: sessions = [] } = useSessions(selectedPlanId);
   const currentSession = useMemo(() => sessions.find(s => s.order === selectedSessionOrder) || sessions[0], [sessions, selectedSessionOrder]);
-
-  const currentIndex = useMemo(() => sessions.findIndex(s => s.session_id === currentSession?.session_id), [sessions, currentSession]);
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex < sessions.length - 1;
-
-  const handlePrev = () => {
-    if (hasPrev) {
-      setSelectedSessionOrder(sessions[currentIndex - 1].order);
-    }
-  };
-
-  const handleNext = () => {
-    if (hasNext) {
-      setSelectedSessionOrder(sessions[currentIndex + 1].order);
-    }
-  };
 
   const showStudySuite = activeNav === WISDOM_STUDY_ENGINE;
   const passage = suitePassageOverride ?? currentSession?.primary_verse ?? '';
@@ -81,33 +64,14 @@ export const MainContent: React.FC = () => {
           </div>
         </div>
       ) : showStudySuite ? (
-        <div className="absolute inset-0 flex flex-col">
-          <iframe
-            key={suiteEmbedSrc}
-            src={suiteEmbedSrc}
-            title="Wisdom Bible Study Suite"
-            className="flex-1 w-full border-0"
-            allow="clipboard-read; clipboard-write; fullscreen"
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
-          <div className="flex items-center justify-between p-4 bg-white border-t border-zinc-200 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] z-10">
-            <button 
-              onClick={handlePrev} 
-              disabled={!hasPrev} 
-              className="px-4 py-2 flex items-center gap-2 text-sm font-bold text-zinc-600 hover:text-brand-orange hover:bg-orange-50 rounded-xl transition-all disabled:opacity-30 disabled:pointer-events-none"
-            >
-              <ChevronLeft size={16} /> Previous
-            </button>
-            <span className="text-sm font-semibold text-zinc-400 capitalize hidden sm:block">{currentSession?.title}</span>
-            <button 
-              onClick={handleNext} 
-              disabled={!hasNext} 
-              className="px-4 py-2 flex items-center gap-2 text-sm font-bold text-zinc-600 hover:text-brand-orange hover:bg-orange-50 rounded-xl transition-all disabled:opacity-30 disabled:pointer-events-none"
-            >
-              Next <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+        <iframe
+          key={suiteEmbedSrc}
+          src={suiteEmbedSrc}
+          title="Wisdom Bible Study Suite"
+          className="absolute inset-0 block h-full w-full border-0"
+          allow="clipboard-read; clipboard-write; fullscreen"
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
       ) : (
         <div className="flex min-h-full flex-col items-center justify-center gap-4 bg-brand-sepia px-8 py-12 text-center">
           <p className="text-sm text-zinc-600">

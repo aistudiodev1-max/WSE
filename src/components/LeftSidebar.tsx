@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo, useEffect } from 'react';
-import { Sparkles, BookOpen, Library, CheckCircle2, BookMarked, ChevronRight, Layout } from 'lucide-react';
+import { Sparkles, BookOpen, Library, CheckCircle2, BookMarked, ChevronRight, ChevronLeft, Layout } from 'lucide-react';
 import { SidebarItem, Card, ProgressCircle } from './SidebarComponents';
 import { useUIStore } from '../store/useUIStore';
 import { useAuthStore } from '../features/auth/useAuthStore';
@@ -49,6 +49,17 @@ export const LeftSidebar: React.FC = () => {
   }, [currentPlan, selectedPlanId, setSelectedPlanId]);
 
   const session = useMemo(() => sessions.find(s => s.order === selectedSessionOrder) || sessions[0], [sessions, selectedSessionOrder]);
+  const currentIndex = useMemo(() => sessions.findIndex(s => s.session_id === session?.session_id), [sessions, session]);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < sessions.length - 1;
+
+  const handlePrev = () => {
+    if (hasPrev) setSelectedSessionOrder(sessions[currentIndex - 1].order);
+  };
+
+  const handleNext = () => {
+    if (hasNext) setSelectedSessionOrder(sessions[currentIndex + 1].order);
+  };
 
   const completedCount = useMemo(() => {
     return userProgress.filter(p => 
@@ -108,8 +119,8 @@ export const LeftSidebar: React.FC = () => {
           <ProgressCircle percent={progressPercent} />
         </div>
         
-        <div className="flex items-center gap-2">
-          <div className="flex flex-wrap items-center gap-y-2">
+        <div className="flex items-center justify-center w-full pb-2">
+          <div className="flex flex-wrap items-center justify-center gap-y-2">
             {sessions.map((s, idx) => {
               const isCompleted = userProgress.some(p => p.session_id === s.session_id && p.status === 'completed');
               const isActive = s.session_id === session?.session_id;
@@ -219,10 +230,17 @@ export const LeftSidebar: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-6 border-t border-zinc-200 bg-white">
+      <div className="p-4 border-t border-zinc-200 bg-white flex items-center gap-2">
+        <button 
+          onClick={handlePrev} 
+          disabled={!hasPrev} 
+          className="w-14 h-14 rounded-full flex items-center justify-center bg-zinc-50 border border-zinc-200 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-all disabled:opacity-30 disabled:pointer-events-none shrink-0"
+        >
+          <ChevronLeft size={24} />
+        </button>
         <button 
           onClick={handleComplete}
-          className={`w-full py-4 rounded-full flex items-center justify-center gap-2 font-black transition-all group shadow-lg active:scale-95 ${
+          className={`flex-1 h-14 rounded-full flex items-center justify-center gap-2 font-black transition-all group shadow-lg active:scale-95 ${
             progressPercent === 100 
               ? 'bg-emerald-100 text-emerald-700 cursor-default' 
               : 'bg-brand-teal hover:bg-[#86d4c5] text-[#1a5b4e] shadow-emerald-200/50'
@@ -230,7 +248,13 @@ export const LeftSidebar: React.FC = () => {
         >
           <CheckCircle2 size={20} className={progressPercent === 100 ? 'text-emerald-500' : ''} />
           {progressPercent === 100 ? 'SESSION COMPLETED' : 'MARK COMPLETED'}
-          {progressPercent < 100 && <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />}
+        </button>
+        <button 
+          onClick={handleNext} 
+          disabled={!hasNext} 
+          className="w-14 h-14 rounded-full flex items-center justify-center bg-zinc-50 border border-zinc-200 text-zinc-400 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange transition-all disabled:opacity-30 disabled:pointer-events-none shrink-0"
+        >
+          <ChevronRight size={24} />
         </button>
       </div>
     </div>
