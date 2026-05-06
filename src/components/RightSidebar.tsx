@@ -29,7 +29,9 @@ export const RightSidebar: React.FC = () => {
     noteVisibility, setNoteVisibility
   } = useUIStore();
 
-  const { data: notes = [] } = useNotes();
+  const institutionId = appUser?.church_id;
+  
+  const { data: notes = [] } = useNotes(institutionId, selectedGroupId ?? undefined);
   const { data: allPlans = [] } = usePlans();
   const { data: sessions = [] } = useSessions(selectedPlanId);
   const { data: myGroups = [] } = useMyGroups();
@@ -88,12 +90,12 @@ export const RightSidebar: React.FC = () => {
       visibility: noteVisibility,
       created_at: new Date().toISOString()
     };
-    saveNoteMutation.mutate(noteData);
+    saveNoteMutation.mutate({ institutionId: institutionId!, groupId: selectedGroupId!, note: noteData });
     setNoteContent('');
   };
 
   const onToggleCollapse = () => setNotesCollapsed(!isNotesCollapsed);
-  const onDeleteNote = (id: string) => deleteNoteMutation.mutate(id);
+  const onDeleteNote = (id: string) => deleteNoteMutation.mutate({ institutionId: institutionId!, groupId: selectedGroupId!, noteId: id });
 
   return (
     <div className="relative flex h-full">

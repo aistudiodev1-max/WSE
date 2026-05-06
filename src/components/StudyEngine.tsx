@@ -8,11 +8,15 @@ import { usePlans, useAssignments } from '../features/plans/hooks';
 import { useMyGroups } from '../features/groups/hooks';
 import { useSessions } from '../features/sessions/hooks';
 import { useUIStore } from '../store/useUIStore';
+import { useAuthStore } from '../features/auth/useAuthStore';
 
 export const StudyEngine: React.FC = () => {
+  const { appUser } = useAuthStore();
   const selectedPlanId = useUIStore((state) => state.selectedPlanId);
+  const selectedGroupId = useUIStore((state) => state.selectedGroupId);
+  const institutionId = appUser?.church_id;
 
-  const { isLoading: isLoadingNotes } = useNotes();
+  const { isLoading: isLoadingNotes } = useNotes(institutionId, selectedGroupId ?? undefined);
   const { isLoading: isLoadingProgress } = useProgress(selectedPlanId);
   const { isLoading: isLoadingPlans } = usePlans();
   const { isLoading: isLoadingAssignments } = useAssignments();
