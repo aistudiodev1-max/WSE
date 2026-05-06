@@ -13,7 +13,7 @@ export const groupsApi = {
           church_id: institutionId,
           church_name: g.institution_name || 'Institution',
           group_override: 'none',
-          members: g.members ? g.members.map((m: any) => String(m.id || m)) : [],
+          members: (g.users || g.members || []).map((m: any) => String(m.id || m)),
           role_overrides: {}
         }));
       }
@@ -33,7 +33,7 @@ export const groupsApi = {
           church_id: institutionId,
           church_name: g.institution_name || 'Institution',
           group_override: 'none',
-          members: g.members ? g.members.map((m: any) => String(m.id || m)) : [],
+          members: (g.users || g.members || []).map((m: any) => String(m.id || m)),
           role_overrides: {}
         }));
       }
@@ -53,7 +53,7 @@ export const groupsApi = {
             church_id: institutionId,
             church_name: data.institution_name || 'Institution',
             group_override: 'none',
-            members: data.members ? data.members.map((m: any) => String(m.id || m)) : [],
+            members: (data.users || data.members || []).map((m: any) => String(m.id || m)),
             role_overrides: {}
          };
        }
