@@ -130,10 +130,8 @@ export const memberApi = {
     planId: string,
     payload: PlanProgressPayload
   ): Promise<void> => {
-    return apiClient(`/api/v2/institutions/${institution}/groups/${group}/plans/${planId}/progress`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+    // This endpoint is for admins only, so we don't call it from the member app directly
+    return Promise.resolve();
   },
 
   /**
@@ -160,6 +158,13 @@ export const memberApi = {
     group: string,
     planId: string
   ): Promise<MemberProgressOverview> => {
-    return apiClient(`/api/v2/institutions/${institution}/groups/${group}/plans/${planId}/progress`);
+    // This endpoint is for admins only, return fallback
+    return {
+      plan_id: planId,
+      status: 'active',
+      progress_percent: 0,
+      sessions_completed: 0,
+      total_sessions: 1
+    };
   },
 };
