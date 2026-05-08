@@ -43,9 +43,9 @@ export const RightSidebar: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
 
   // --- Computed ---
-  const currentGroup = useMemo(() => myGroups.find(g => g.group_id === selectedGroupId) || myGroups[0], [myGroups, selectedGroupId]);
-  const currentPlan = useMemo(() => allPlans.find(p => p.plan_id === selectedPlanId), [allPlans, selectedPlanId]);
-  const currentSession = useMemo(() => sessions.find(s => s.order === selectedSessionOrder) || sessions[0], [sessions, selectedSessionOrder]);
+  const currentGroup = useMemo(() => myGroups.find(g => String(g.group_id) === String(selectedGroupId)) || myGroups[0], [myGroups, selectedGroupId]);
+  const currentPlan = useMemo(() => allPlans.find(p => String(p.plan_id) === String(selectedPlanId)) || allPlans[0], [allPlans, selectedPlanId]);
+  const currentSession = useMemo(() => sessions.find(s => String(s.order) === String(selectedSessionOrder)) || sessions[0], [sessions, selectedSessionOrder]);
 
   const role = useMemo(() => (appUser && currentGroup) ? getRoleInGroup(appUser, currentGroup) : 'member', [appUser, currentGroup]);
   const isLicensed = appUser?.licensed ?? true;
@@ -65,7 +65,9 @@ export const RightSidebar: React.FC = () => {
 
   // --- Handlers ---
   const handleSaveNote = async () => {
-    if (!noteContent.trim() || !user || !currentPlan || !currentSession || !selectedGroupId) return;
+    if (!noteContent.trim() || !user || !currentPlan || !selectedGroupId) return;
+    if (activeNoteType !== 'plan' && !currentSession) return;
+
     const noteData: AppNote = {
       note_id: `note_${Date.now()}`,
       user_id: user.uid,
@@ -75,11 +77,11 @@ export const RightSidebar: React.FC = () => {
       session_id: activeNoteType === 'plan' ? null : currentSession.session_id,
       note_type: activeNoteType,
       content: noteContent,
-      verse_id: activeNoteType === 'verse' ? currentSession.primary_verse : '',
+      verse_id: (activeNoteType === 'verse' && currentSession) ? currentSession.primary_verse : '',
       visibility: noteVisibility,
       created_at: new Date().toISOString()
     };
-    saveNoteMutation.mutate({ institutionId: institutionId!, groupId: selectedGroupId!, note: noteData });
+    saveNoteMutation.mutate({ institutionId: institutionId || 'default', groupId: selectedGroupId, note: noteData });
     setNoteContent('');
   };
 

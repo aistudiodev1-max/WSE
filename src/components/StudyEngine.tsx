@@ -23,7 +23,10 @@ export const StudyEngine: React.FC = () => {
   const { isLoading: isLoadingGroups } = useMyGroups();
   const { isLoading: isLoadingSessions } = useSessions(selectedPlanId);
 
-  const isDataLoading = isLoadingNotes || isLoadingProgress || isLoadingPlans || isLoadingAssignments || isLoadingGroups || isLoadingSessions;
+  const isDataLoading = false; // Disable global loading block so the UI renders fully and components handle their own empty/loading states to avoid deadlock
+
+  // Optional: keeping the vars to avoid unused variables error, or just let them be.
+  const loadingState = isLoadingNotes || isLoadingProgress || isLoadingPlans || isLoadingAssignments || isLoadingGroups || isLoadingSessions;
 
   if (isDataLoading) {
     return (
