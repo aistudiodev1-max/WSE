@@ -115,11 +115,11 @@ export const RightSidebar: React.FC = () => {
           x: isNotesCollapsed ? 20 : 0
         }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="border-l border-zinc-200 bg-zinc-50 flex flex-col overflow-hidden shadow-2xl z-20"
+        className="h-full border-l border-zinc-200 bg-zinc-50 flex flex-col overflow-hidden shadow-2xl z-20"
       >
         <div className="w-[380px] h-full flex flex-col">
           {/* Header */}
-          <div className="p-6 bg-white border-b border-zinc-200 flex items-center justify-between">
+          <div className="p-6 bg-white border-b border-zinc-200 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <BookMarked className="text-brand-orange" size={20} />
           <div className="flex flex-col">
@@ -142,7 +142,7 @@ export const RightSidebar: React.FC = () => {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toggle between Personal and Shared */}
-        <div className="px-6 pt-6 pb-2">
+        <div className="px-6 pt-6 pb-2 shrink-0">
           <div className="flex p-1 bg-zinc-200 rounded-xl">
              <button 
                onClick={() => setShowShared(false)}

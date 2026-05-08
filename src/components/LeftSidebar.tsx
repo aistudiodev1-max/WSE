@@ -117,9 +117,9 @@ export const LeftSidebar: React.FC = () => {
 
   if (!session || !currentPlan) return null;
   return (
-    <div className="z-10 flex h-full min-h-0 w-[320px] shrink-0 flex-col overflow-y-auto border-r border-zinc-200 bg-white no-scrollbar shadow-sm">
+    <div className="z-10 flex h-full min-h-0 w-[320px] shrink-0 flex-col border-r border-zinc-200 bg-white shadow-sm overflow-hidden">
       {/* Session Progress Header */}
-      <div className="p-6 border-b border-zinc-200 bg-zinc-50/50">
+      <div className="p-6 border-b border-zinc-200 bg-zinc-50/50 shrink-0">
         <div className="flex items-center justify-between mb-6">
           <div className="flex flex-col">
             <div className="flex items-center gap-2 mb-1">
@@ -161,7 +161,7 @@ export const LeftSidebar: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 overflow-y-auto no-scrollbar">
         {/* Active Study Plan Selector */}
         <SidebarItem title="Assigned Study Plans" icon={Layout} count={assignedPlans.length} isOpen={true}>
           <div className="space-y-3 mt-2">
@@ -242,7 +242,7 @@ export const LeftSidebar: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 border-t border-zinc-200 bg-white flex flex-col gap-3">
+      <div className="p-4 border-t border-zinc-200 bg-white flex flex-col gap-3 shrink-0">
         <div className="flex gap-2">
           <button 
             onClick={handlePrev} 
