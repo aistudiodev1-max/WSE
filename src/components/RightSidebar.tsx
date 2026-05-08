@@ -7,83 +7,119 @@ import React, { useState, useMemo } from 'react';
 import { BookMarked, X, Settings, Copy, Trash2, BookOpen, Share2, Shield, Eye, ArrowUpDown, Calendar, LayoutList } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppNote, NoteType, Visibility } from '../types';
-
-interface RightSidebarProps {
-  notes: AppNote[];
-  sharedNotes: AppNote[];
-  activeNoteType: NoteType;
-  setActiveNoteType: (type: NoteType) => void;
-  noteContent: string;
-  setNoteContent: (content: string) => void;
-  noteVisibility: Visibility;
-  setNoteVisibility: (v: Visibility) => void;
-  onSaveNote: () => void;
-  onDeleteNote: (id: string) => void;
-  isLicensed: boolean;
-  role: string;
-  isCollapsed: boolean;
-  onToggleCollapse: () => void;
-}
+import { useUIStore } from '../store/useUIStore';
+import { useAuthStore } from '../features/auth/useAuthStore';
+import { useNotes, useSaveNote, useDeleteNote } from '../features/notes/hooks';
+import { usePlans } from '../features/plans/hooks';
+import { useSessions } from '../features/sessions/hooks';
+import { useMyGroups } from '../features/groups/hooks';
+import { getRoleInGroup } from '../utils/permissions';
 
 type SortOption = 'newest' | 'oldest' | 'type';
 
-export const RightSidebar: React.FC<RightSidebarProps> = ({
-  notes,
-  sharedNotes,
-  activeNoteType,
-  setActiveNoteType,
-  noteContent,
-  setNoteContent,
-  noteVisibility,
-  setNoteVisibility,
-  onSaveNote,
-  onDeleteNote,
-  isLicensed,
-  role,
-  isCollapsed,
-  onToggleCollapse
-}) => {
+export const RightSidebar: React.FC = () => {
+  const { user, appUser } = useAuthStore();
+  const { 
+    isNotesCollapsed, setNotesCollapsed,
+    selectedPlanId,
+    selectedSessionOrder,
+    selectedGroupId,
+    activeNoteType, setActiveNoteType,
+    noteContent, setNoteContent,
+    noteVisibility, setNoteVisibility
+  } = useUIStore();
+
+  const institutionId = appUser?.church_id;
+  
+  const { data: notes = [] } = useNotes(institutionId, selectedGroupId ?? undefined);
+  const { data: allPlans = [] } = usePlans();
+  const { data: sessions = [] } = useSessions(selectedPlanId);
+  const { data: myGroups = [] } = useMyGroups();
+
+  const saveNoteMutation = useSaveNote();
+  const deleteNoteMutation = useDeleteNote();
+
   const [showShared, setShowShared] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
 
+  // --- Computed ---
+  const currentGroup = useMemo(() => myGroups.find(g => String(g.group_id) === String(selectedGroupId)) || myGroups[0], [myGroups, selectedGroupId]);
+  const currentPlan = useMemo(() => allPlans.find(p => String(p.plan_id) === String(selectedPlanId)) || allPlans[0], [allPlans, selectedPlanId]);
+  const currentSession = useMemo(() => sessions.find(s => String(s.order) === String(selectedSessionOrder)) || sessions[0], [sessions, selectedSessionOrder]);
+
+  const role = useMemo(() => (appUser && currentGroup) ? getRoleInGroup(appUser, currentGroup) : 'member', [appUser, currentGroup]);
+  const isLicensed = appUser?.licensed ?? true;
+
+  const personalNotesList = useMemo(() => notes.filter(n => n.visibility !== 'shared_group'), [notes]);
+
+  const sharedNotesList = useMemo(() => notes.filter(n => n.visibility === 'shared_group'), [notes]);
+
   const sortedNotes = useMemo(() => {
-    return [...notes].sort((a, b) => {
+    return [...personalNotesList].sort((a, b) => {
       if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       if (sortBy === 'type') return a.note_type.localeCompare(b.note_type);
       return 0;
     });
-  }, [notes, sortBy]);
+  }, [personalNotesList, sortBy]);
+
+  // --- Handlers ---
+  const handleSaveNote = async () => {
+    if (!noteContent.trim() || !user || !currentPlan || !selectedGroupId) return;
+    if (activeNoteType !== 'plan' && !currentSession) return;
+
+    const noteData: AppNote = {
+      note_id: `note_${Date.now()}`,
+      user_id: user.uid,
+      user_name: user.displayName || 'User',
+      group_id: selectedGroupId,
+      plan_id: currentPlan.plan_id,
+      session_id: activeNoteType === 'plan' ? null : currentSession.session_id,
+      note_type: activeNoteType,
+      content: noteContent,
+      verse_id: (activeNoteType === 'verse' && currentSession) ? currentSession.primary_verse : '',
+      visibility: noteVisibility,
+      created_at: new Date().toISOString()
+    };
+    saveNoteMutation.mutate({ institutionId: institutionId || 'default', groupId: selectedGroupId, note: noteData });
+    setNoteContent('');
+  };
+
+  const onToggleCollapse = () => setNotesCollapsed(!isNotesCollapsed);
+  const onDeleteNote = (id: string) => deleteNoteMutation.mutate({ institutionId: institutionId!, groupId: selectedGroupId!, noteId: id });
 
   return (
     <div className="relative flex h-full">
-      {/* Toggle Button - Floating on the left edge */}
-      <button
-        onClick={onToggleCollapse}
-        className={`absolute top-1/2 -left-4 z-50 transform -translate-y-1/2 w-8 h-12 bg-white border border-zinc-200 shadow-lg rounded-xl flex items-center justify-center text-zinc-400 hover:text-brand-orange transition-all group ${isCollapsed ? 'translate-x-1' : ''}`}
-        title={isCollapsed ? "Expand Notes" : "Collapse Notes"}
-      >
-        <motion.div
-          animate={{ rotate: isCollapsed ? 180 : 0 }}
-          transition={{ type: "spring", stiffness: 200, damping: 20 }}
-        >
-          <BookMarked size={16} className="group-hover:scale-110 transition-transform" />
-        </motion.div>
-      </button>
+      <AnimatePresence>
+        {isNotesCollapsed && (
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleCollapse}
+            className="absolute bottom-6 right-6 z-50 w-14 h-14 bg-brand-orange text-white rounded-full flex items-center justify-center shadow-2xl hover:bg-orange-600 transition-colors"
+            title="Open Notes Engine"
+          >
+            <BookMarked size={24} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <motion.div
         initial={false}
         animate={{ 
-          width: isCollapsed ? 0 : 380,
-          opacity: isCollapsed ? 0 : 1,
-          x: isCollapsed ? 20 : 0
+          width: isNotesCollapsed ? 0 : 380,
+          opacity: isNotesCollapsed ? 0 : 1,
+          x: isNotesCollapsed ? 20 : 0
         }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="border-l border-zinc-200 bg-zinc-50 flex flex-col overflow-hidden shadow-2xl z-20"
+        className="h-full border-l border-zinc-200 bg-zinc-50 flex flex-col overflow-hidden shadow-2xl z-20"
       >
         <div className="w-[380px] h-full flex flex-col">
           {/* Header */}
-          <div className="p-6 bg-white border-b border-zinc-200 flex items-center justify-between">
+          <div className="p-6 bg-white border-b border-zinc-200 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <BookMarked className="text-brand-orange" size={20} />
           <div className="flex flex-col">
@@ -91,7 +127,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
             <div className="flex items-center gap-2">
               <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Personal</span>
               <span className="bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full text-[10px] font-black">
-                {notes.length}
+                {personalNotesList.length}
               </span>
             </div>
           </div>
@@ -106,7 +142,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toggle between Personal and Shared */}
-        <div className="px-6 pt-6 pb-2">
+        <div className="px-6 pt-6 pb-2 shrink-0">
           <div className="flex p-1 bg-zinc-200 rounded-xl">
              <button 
                onClick={() => setShowShared(false)}
@@ -184,7 +220,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                   </div>
 
                   <button 
-                    onClick={onSaveNote}
+                    onClick={handleSaveNote}
                     disabled={!noteContent.trim()}
                     className="w-full py-4 bg-brand-orange hover:bg-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-brand-orange/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                   >
@@ -316,10 +352,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                <h3 className="text-[10px] font-black text-brand-orange uppercase tracking-widest mb-4 flex items-center gap-2">
                  <Share2 size={12} />
                  Collective Wisdom
-              </h3>
+               </h3>
               <div className="space-y-4">
-                {sharedNotes.length > 0 ? (
-                  sharedNotes.map(note => (
+                {sharedNotesList.length > 0 ? (
+                  sharedNotesList.map(note => (
                     <div key={note.note_id} className="p-5 bg-white rounded-2xl border-l-4 border-l-brand-orange border-zinc-100 shadow-sm space-y-3">
                       <div className="flex items-center justify-between">
                          <div className="flex items-center gap-2">

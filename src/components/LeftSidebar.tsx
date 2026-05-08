@@ -3,62 +3,165 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
-import { Sparkles, BookOpen, Library, CheckCircle2, BookMarked, ChevronRight, Layout } from 'lucide-react';
+import React, { useMemo, useEffect, useRef } from 'react';
+import { Sparkles, BookOpen, Library, CheckCircle2, BookMarked, ChevronRight, ChevronLeft, Layout } from 'lucide-react';
 import { SidebarItem, Card, ProgressCircle } from './SidebarComponents';
-import { Session, StudyPlan } from '../types';
+import { useUIStore } from '../store/useUIStore';
+import { useAuthStore } from '../features/auth/useAuthStore';
+import { usePlans, useAssignments } from '../features/plans/hooks';
+import { useSessions } from '../features/sessions/hooks';
+import { useSaveProgress } from '../features/progress/hooks';
+import { resolvePermissions } from '../utils/permissions';
+import { getRoleInGroup } from '../utils/permissions';
+import { useMyGroups } from '../features/groups/hooks';
 
-interface LeftSidebarProps {
-  session: Session;
-  plan: StudyPlan;
-  assignedPlans: StudyPlan[];
-  selectedPlanId: string;
-  setSelectedPlan: (id: string) => void;
-  onComplete: () => void;
-  progressPercent: number;
-  onOpenEstudyLauncher: (verseRef: string) => void;
-}
+export const LeftSidebar: React.FC = () => {
+  const { user, appUser } = useAuthStore();
+  const { 
+    selectedPlanId, setSelectedPlanId,
+    selectedSessionOrder, setSelectedSessionOrder,
+    selectedGroupId, setSelectedGroupId,
+    setEstudyLauncher
+  } = useUIStore();
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = ({ 
-  session, 
-  plan, 
-  assignedPlans, 
-  selectedPlanId,
-  setSelectedPlan,
-  onComplete,
-  progressPercent,
-  onOpenEstudyLauncher,
-}) => {
+  const { data: allPlans = [] } = usePlans();
+  const { data: allAssignments = [] } = useAssignments();
+  const { data: myGroups = [] } = useMyGroups();
+  const { data: sessions = [] } = useSessions(selectedPlanId);
+
+  const lastAutoSelectedPlanRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (sessions.length > 0 && selectedPlanId && lastAutoSelectedPlanRef.current !== selectedPlanId) {
+      const firstIncomplete = sessions.find(s => !s.is_completed);
+      if (firstIncomplete) {
+        setSelectedSessionOrder(firstIncomplete.order);
+      } else {
+        setSelectedSessionOrder(sessions[0].order);
+      }
+      lastAutoSelectedPlanRef.current = selectedPlanId;
+    }
+  }, [sessions, selectedPlanId, setSelectedSessionOrder]);
+
+  // --- Computed ---
+  const currentGroup = useMemo(() => myGroups.find(g => String(g.group_id) === String(selectedGroupId)), [myGroups, selectedGroupId]);
+  
+  const assignedPlans = useMemo(() => {
+    // If Assignments API returns plan data, we just map it here 
+
+    // depending on your assignment interface mapping
+    return allPlans.length > 0 ? allPlans : [];
+  }, [allPlans]);
+
+  const currentPlan = useMemo(() => allPlans.find(p => String(p.plan_id) === String(selectedPlanId)) || assignedPlans[0] || allPlans[0], [selectedPlanId, assignedPlans, allPlans]);
+
+  useEffect(() => {
+    if (currentPlan && currentPlan.plan_id !== selectedPlanId) {
+       setSelectedPlanId(currentPlan.plan_id);
+    }
+  }, [currentPlan, selectedPlanId, setSelectedPlanId]);
+
+  const session = useMemo(() => sessions.find(s => s.order === selectedSessionOrder) || sessions[0], [sessions, selectedSessionOrder]);
+  const currentIndex = useMemo(() => sessions.findIndex(s => s.session_id === session?.session_id), [sessions, session]);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < sessions.length - 1;
+
+  const handlePrev = () => {
+    if (hasPrev) setSelectedSessionOrder(sessions[currentIndex - 1].order);
+  };
+
+  const handleNext = () => {
+    if (hasNext) setSelectedSessionOrder(sessions[currentIndex + 1].order);
+  };
+
+  const completedCount = useMemo(() => {
+    return sessions.filter(s => s.is_completed).length;
+  }, [sessions]);
+
+  const progressPercent = useMemo(() => {
+    if (!sessions.length) return 0;
+    return Math.round((completedCount / sessions.length) * 100);
+  }, [completedCount, sessions]);
+  
+  const saveProgressMutation = useSaveProgress(sessions.length, completedCount);
+
+  const context = useMemo(() => ({
+    role_in_group: (appUser && currentGroup) ? getRoleInGroup(appUser, currentGroup) : 'member',
+    membership_level: appUser?.membership_level || 'Free',
+    licensed: appUser?.licensed ?? true
+  }), [appUser, currentGroup]);
+
+  const permissions = useMemo(() => resolvePermissions(context), [context]);
+
+  const handleComplete = async () => {
+    if (!permissions.can_track_progress || !user || !session || !selectedGroupId || !selectedPlanId) return;
+    if (!session.is_completed) {
+      saveProgressMutation.mutate({
+        progress: {
+          progress_id: `prog_${Date.now()}`,
+          user_id: user.uid,
+          group_id: selectedGroupId,
+          session_id: session.session_id,
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        },
+        planId: selectedPlanId
+      });
+      if (hasNext) {
+        setSelectedSessionOrder(sessions[currentIndex + 1].order);
+      }
+    }
+  };
+
+  const onOpenEstudyLauncher = (verseRef: string) => setEstudyLauncher({ open: true, verseRef });
+
+  if (!session || !currentPlan) return null;
   return (
-    <div className="z-10 flex h-full min-h-0 w-[320px] shrink-0 flex-col overflow-y-auto border-r border-zinc-200 bg-white no-scrollbar shadow-sm">
+    <div className="z-10 flex h-full min-h-0 w-[320px] shrink-0 flex-col border-r border-zinc-200 bg-white shadow-sm overflow-hidden">
       {/* Session Progress Header */}
-      <div className="p-6 border-b border-zinc-200 bg-zinc-50/50">
+      <div className="p-6 border-b border-zinc-200 bg-zinc-50/50 shrink-0">
         <div className="flex items-center justify-between mb-6">
           <div className="flex flex-col">
             <div className="flex items-center gap-2 mb-1">
                <Sparkles className="text-brand-orange" size={18} />
                <h2 className="text-sm font-black uppercase tracking-tighter text-brand-dark">Study Session</h2>
             </div>
-            <span className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">{plan?.title || "No Plan"}</span>
+            <span className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">{currentPlan?.title || "No Plan"}</span>
           </div>
           <ProgressCircle percent={progressPercent} />
         </div>
         
-        <div className="flex items-center gap-2">
-          <div className="flex items-center">
-            <div className="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-sm ring-4 ring-emerald-50">
-              <CheckCircle2 size={16} />
-            </div>
-            <div className="w-8 h-[2px] bg-emerald-200 mx-0.5" />
-            <div className="w-7 h-7 border-2 border-zinc-200 rounded-full flex items-center justify-center text-xs font-black text-zinc-400 bg-white">
-              2
-            </div>
+        <div className="flex items-center justify-center w-full pb-2">
+          <div className="flex flex-wrap items-center justify-center gap-y-2">
+            {sessions.map((s, idx) => {
+              const isCompleted = s.is_completed;
+              const isActive = s.session_id === session?.session_id;
+              
+              return (
+                <React.Fragment key={s.session_id}>
+                  <button
+                    onClick={() => setSelectedSessionOrder(s.order)}
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all shadow-sm active:scale-95 ${
+                      isCompleted 
+                        ? 'bg-emerald-500 text-white ring-4 ring-emerald-50'
+                        : isActive
+                          ? 'border-2 border-brand-orange text-brand-orange bg-brand-orange/10 ring-4 ring-orange-50'
+                          : 'border-2 border-zinc-200 text-zinc-400 bg-white hover:border-zinc-300'
+                    }`}
+                  >
+                    {isCompleted ? <CheckCircle2 size={16} /> : idx + 1}
+                  </button>
+                  {idx < sessions.length - 1 && (
+                     <div className={`w-4 sm:w-6 h-[2px] mx-0.5 ${isCompleted ? 'bg-emerald-200' : 'bg-zinc-200'}`} />
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-auto underline decoration-brand-orange decoration-2 underline-offset-4">Track Progress</span>
         </div>
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 overflow-y-auto no-scrollbar">
         {/* Active Study Plan Selector */}
         <SidebarItem title="Assigned Study Plans" icon={Layout} count={assignedPlans.length} isOpen={true}>
           <div className="space-y-3 mt-2">
@@ -66,7 +169,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               assignedPlans.map(p => (
                 <button
                   key={p.plan_id}
-                  onClick={() => setSelectedPlan(p.plan_id)}
+                  onClick={() => setSelectedPlanId(p.plan_id)}
                   className={`w-full text-left p-3 rounded-xl border transition-all relative group ${
                     selectedPlanId === p.plan_id 
                       ? 'bg-brand-dark border-brand-dark text-white shadow-md' 
@@ -112,20 +215,22 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             </div>
           </Card>
 
-          <SidebarItem title="Supporting Verses" count={session?.supporting_verses.length || 0} icon={Library} isOpen={true}>
-             <div className="grid grid-cols-1 gap-2 mt-2">
-                {session?.supporting_verses.map(v => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => onOpenEstudyLauncher(v)}
-                    className="text-left px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-[10px] font-bold text-zinc-600 hover:bg-brand-sepia hover:border-brand-orange transition-all shadow-sm active:scale-95"
-                  >
-                    {v}
-                  </button>
-                ))}
-             </div>
-          </SidebarItem>
+          {session?.supporting_verses && session.supporting_verses.length > 0 && (
+            <SidebarItem title="Supporting Verses" count={session.supporting_verses.length} icon={Library} isOpen={true}>
+               <div className="grid grid-cols-1 gap-2 mt-2">
+                  {session.supporting_verses.map((v: string) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => onOpenEstudyLauncher(v)}
+                      className="text-left px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-[10px] font-bold text-zinc-600 hover:bg-brand-sepia hover:border-brand-orange transition-all shadow-sm active:scale-95"
+                    >
+                      {v}
+                    </button>
+                  ))}
+               </div>
+            </SidebarItem>
+          )}
 
           <SidebarItem title="Reflection Tool" icon={Sparkles}>
             <div className="p-4 bg-zinc-50 rounded-2xl border-2 border-brand-orange/10 shadow-inner">
@@ -137,18 +242,33 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
       </div>
 
-      <div className="p-6 border-t border-zinc-200 bg-white">
+      <div className="p-4 border-t border-zinc-200 bg-white flex flex-col gap-3 shrink-0">
+        <div className="flex gap-2">
+          <button 
+            onClick={handlePrev} 
+            disabled={!hasPrev} 
+            className="flex-1 h-12 rounded-xl flex items-center justify-center gap-2 bg-zinc-50 border border-zinc-200 text-zinc-500 font-bold text-xs hover:bg-zinc-100 hover:text-zinc-700 transition-all disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ChevronLeft size={16} /> PREVIOUS
+          </button>
+          <button 
+            onClick={handleNext} 
+            disabled={!hasNext} 
+            className="flex-1 h-12 rounded-xl flex items-center justify-center gap-2 bg-zinc-50 border border-zinc-200 text-zinc-500 font-bold text-xs hover:bg-zinc-100 hover:text-zinc-700 transition-all disabled:opacity-30 disabled:pointer-events-none"
+          >
+            NEXT <ChevronRight size={16} />
+          </button>
+        </div>
         <button 
-          onClick={onComplete}
-          className={`w-full py-4 rounded-full flex items-center justify-center gap-2 font-black transition-all group shadow-lg active:scale-95 ${
-            progressPercent === 100 
+          onClick={handleComplete}
+          className={`w-full h-14 rounded-full flex items-center justify-center gap-2 font-black transition-all group shadow-lg active:scale-[0.98] ${
+            session?.is_completed 
               ? 'bg-emerald-100 text-emerald-700 cursor-default' 
               : 'bg-brand-teal hover:bg-[#86d4c5] text-[#1a5b4e] shadow-emerald-200/50'
           }`}
         >
-          <CheckCircle2 size={20} className={progressPercent === 100 ? 'text-emerald-500' : ''} />
-          {progressPercent === 100 ? 'SESSION COMPLETED' : 'MARK COMPLETED'}
-          {progressPercent < 100 && <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />}
+          <CheckCircle2 size={20} className={session?.is_completed ? 'text-emerald-500' : ''} />
+          {session?.is_completed ? 'SESSION COMPLETED' : 'MARK COMPLETED'}
         </button>
       </div>
     </div>

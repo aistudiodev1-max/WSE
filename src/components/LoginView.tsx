@@ -4,7 +4,6 @@
  */
 
 import React from 'react';
-import { useAuth } from '../context/AuthContext';
 import { LogIn, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 

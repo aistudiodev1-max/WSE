@@ -11,6 +11,7 @@ export interface User {
   membership_level: string;
   church_id: string;
   church_name: string;
+  group_id?: string;
 }
 
 export interface Group {
@@ -48,6 +49,8 @@ export interface Session {
   supporting_verses: string[];
   teaching: string;
   reflection: string;
+  is_completed?: boolean;
+  completed_at?: string | null;
 }
 
 export interface Assignment {

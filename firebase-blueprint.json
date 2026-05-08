@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile in the application.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "createdAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["userId", "email"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "User generated notes for sessions, verses, or plans.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "planId": { "type": "string" },
+        "sessionId": { "type": "string" },
+        "noteType": { "type": "string", "enum": ["session", "verse", "plan"] },
+        "content": { "type": "string" },
+        "verseId": { "type": "string" },
+        "visibility": { "type": "string", "enum": ["private", "shared_group"] },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["userId", "groupId", "planId", "noteType", "content", "visibility", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles."
+    },
+    "/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/Note" },
+      "description": "Notes collection."
+    }
+  }
+}

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '../src/index.css';
-import { AuthProvider } from '../src/context/AuthContext';
+import { ReactQueryProvider } from '../src/lib/react-query';
+import { AuthInitializer } from '../src/features/auth/AuthInitializer';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -16,11 +17,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable}`}>
-      <body className="antialiased">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+    <html lang="en" className={`${inter.variable} h-full`}>
+      <body className="antialiased h-full">
+        <ReactQueryProvider>
+          <AuthInitializer>
+            {children}
+          </AuthInitializer>
+        </ReactQueryProvider>
       </body>
     </html>
   );

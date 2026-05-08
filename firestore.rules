@@ -1,0 +1,82 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { return request.auth != null; }
+    function existing() { return resource.data; }
+    function incoming() { return request.resource.data; }
+    function isValidId(id) { return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function isOwner(userId) { return request.auth.uid == userId; }
+
+    // User validation
+    function isValidUser(data) {
+      return data.keys().size() >= 2
+        && data.keys().hasAll(['userId', 'email'])
+        && data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128
+        && data.userId == request.auth.uid
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 256;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) 
+        && isValidId(userId)
+        && isValidUser(incoming())
+        && incoming().email == request.auth.token.email
+        && request.auth.token.email_verified == true;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    function isValidNote(data) {
+      return data.keys().hasAll(['userId', 'groupId', 'planId', 'noteType', 'content', 'visibility', 'createdAt', 'updatedAt'])
+      && data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 && data.userId == request.auth.uid
+      && data.groupId is string && data.groupId.size() > 0 && data.groupId.size() <= 128
+      && data.planId is string && data.planId.size() <= 128
+      && data.noteType is string && data.noteType.matches('^(session|verse|plan)$')
+      && data.content is string && data.content.size() <= 10000
+      && data.visibility is string && data.visibility.matches('^(private|shared_group)$')
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    match /notes/{noteId} {
+      // Get: must be owner, or it must be shared.
+      // (Group verification skipped to avoid `get` as per clause, relying on visibility being public to group)
+      allow get: if isSignedIn() && isValidId(noteId) && (
+        existing().userId == request.auth.uid ||
+        existing().visibility == 'shared_group'
+      );
+
+      // List: enforce that client queries userId==uid explicitly OR queries visibility==shared_group
+      allow list: if isSignedIn() && (
+        existing().userId == request.auth.uid ||
+        existing().visibility == 'shared_group'
+      );
+
+      allow create: if isSignedIn() && isValidId(noteId)
+        && isValidNote(incoming())
+        && incoming().keys().size() >= 8 && incoming().keys().size() <= 10
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (!('sessionId' in incoming()) || (incoming().sessionId is string && incoming().sessionId.size() <= 128))
+        && (!('verseId' in incoming()) || (incoming().verseId is string && incoming().verseId.size() <= 128));
+
+      allow update: if isSignedIn() && isValidId(noteId)
+        && isValidNote(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'visibility', 'updatedAt'])
+        && incoming().updatedAt == request.time
+        && incoming().userId == existing().userId
+        && incoming().groupId == existing().groupId
+        && incoming().planId == existing().planId
+        && incoming().noteType == existing().noteType
+        && incoming().createdAt == existing().createdAt;
+
+      allow delete: if isSignedIn() && isValidId(noteId) && existing().userId == request.auth.uid;
+    }
+  }
+}

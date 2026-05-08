@@ -6,20 +6,20 @@
 import React from 'react';
 import { User } from 'lucide-react';
 import { motion } from 'motion/react';
-
-interface HeaderProps {
-  userName: string;
-  activeNav: string;
-  setActiveNav: (nav: string) => void;
-}
+import { useUIStore } from '../store/useUIStore';
+import { useAuthStore } from '../features/auth/useAuthStore';
 
 type NavItem = {
   name: string;
-  /** If set, opens in a new tab; does not change active in-app nav (Wisdom Study Engine stays highlighted). */
+  /** If set, redirects in same tab; does not change active in-app nav (Wisdom Study Engine stays highlighted). */
   href?: string;
 };
 
-export const Header: React.FC<HeaderProps> = ({ userName, activeNav, setActiveNav }) => {
+export const Header: React.FC = () => {
+  const { activeNav, setActiveNav } = useUIStore();
+  const { appUser } = useAuthStore();
+  const userName = appUser?.user_name || 'Guest User';
+
   const navItems: NavItem[] = [
     { name: 'Home', href: 'https://www.wisdomebooksclub.com/' },
     { name: 'Pearls of Wisdom', href: 'https://www.wisdomebooksclub.com/pearls-of-wisdom' },
@@ -61,8 +61,6 @@ export const Header: React.FC<HeaderProps> = ({ userName, activeNav, setActiveNa
                 <a
                   key={item.name}
                   href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className={`${className} no-underline`}
                 >
                   {item.name}
