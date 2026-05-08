@@ -43,8 +43,8 @@ export const notesApi = {
         apiClient(`/api/v2/institutions/${institutionId}/groups/${groupId}/notes`).catch(() => ({ data: [] }))
       ]);
 
-      const individualNotes = Array.isArray(individualRes?.data) ? individualRes.data : Array.isArray(individualRes) ? individualRes : [];
-      const groupNotes = Array.isArray(groupRes?.data) ? groupRes.data : Array.isArray(groupRes) ? groupRes : [];
+      const individualNotes = Array.isArray(individualRes?.notes) ? individualRes.notes : Array.isArray(individualRes?.data) ? individualRes.data : Array.isArray(individualRes) ? individualRes : [];
+      const groupNotes = Array.isArray(groupRes?.notes) ? groupRes.notes : Array.isArray(groupRes?.data) ? groupRes.data : Array.isArray(groupRes) ? groupRes : [];
 
       return [...individualNotes, ...groupNotes].map(mapBackendNoteToAppNote);
     } catch {
@@ -76,7 +76,7 @@ export const notesApi = {
           body_md: bodyMdPayload
         })
       });
-      return mapBackendNoteToAppNote(response.data || response);
+      return mapBackendNoteToAppNote(response.note || response.data || response);
     } else {
       const updateEndpoint = `/api/v2/notes/${note.note_id}`;
       const response = await apiClient(updateEndpoint, {
@@ -86,7 +86,7 @@ export const notesApi = {
           body_md: bodyMdPayload
         })
       });
-      return mapBackendNoteToAppNote(response.data || response);
+      return mapBackendNoteToAppNote(response.note || response.data || response);
     }
   },
   
