@@ -46,7 +46,10 @@ export const notesApi = {
       const individualNotes = Array.isArray(individualRes?.notes) ? individualRes.notes : Array.isArray(individualRes?.data) ? individualRes.data : Array.isArray(individualRes) ? individualRes : [];
       const groupNotes = Array.isArray(groupRes?.notes) ? groupRes.notes : Array.isArray(groupRes?.data) ? groupRes.data : Array.isArray(groupRes) ? groupRes : [];
 
-      return [...individualNotes, ...groupNotes].map(mapBackendNoteToAppNote);
+      const mappedIndividualNotes = individualNotes.map(mapBackendNoteToAppNote);
+      const mappedGroupNotes = groupNotes.map(mapBackendNoteToAppNote);
+
+      return [...mappedIndividualNotes, ...mappedGroupNotes];
     } catch {
       return [];
     }

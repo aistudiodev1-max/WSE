@@ -51,18 +51,18 @@ export const RightSidebar: React.FC = () => {
   const isLicensed = appUser?.licensed ?? true;
 
   const personalNotesList = useMemo(() => notes.filter(n => 
-    n.user_id === user?.uid && 
-    n.group_id === selectedGroupId && 
-    n.plan_id === selectedPlanId &&
-    ((n.note_type === 'plan' && n.session_id === null) || (n.note_type !== 'plan' && n.session_id === currentSession?.session_id))
+    String(n.user_id) === String(user?.uid) && 
+    String(n.group_id) === String(selectedGroupId) && 
+    String(n.plan_id) === String(selectedPlanId) &&
+    ((n.note_type === 'plan' && !n.session_id) || (n.note_type !== 'plan' && String(n.session_id) === String(currentSession?.session_id)))
   ), [notes, user, selectedGroupId, selectedPlanId, currentSession]);
 
   const sharedNotesList = useMemo(() => notes.filter(n => 
     n.visibility === 'shared_group' && 
-    n.user_id !== user?.uid && 
-    n.group_id === selectedGroupId && 
-    n.plan_id === selectedPlanId &&
-    ((n.note_type === 'plan' && n.session_id === null) || (n.note_type !== 'plan' && n.session_id === currentSession?.session_id))
+    String(n.user_id) !== String(user?.uid) && 
+    String(n.group_id) === String(selectedGroupId) && 
+    String(n.plan_id) === String(selectedPlanId) &&
+    ((n.note_type === 'plan' && !n.session_id) || (n.note_type !== 'plan' && String(n.session_id) === String(currentSession?.session_id)))
   ), [notes, user, selectedGroupId, selectedPlanId, currentSession]);
 
   const sortedNotes = useMemo(() => {
