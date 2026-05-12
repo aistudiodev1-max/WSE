@@ -4,8 +4,10 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { BookMarked, X, Settings, Copy, Trash2, BookOpen, Share2, Shield, Eye, ArrowUpDown, Calendar, LayoutList } from 'lucide-react';
+import { BookMarked, X, Settings, Copy, Trash2, BookOpen, Share2, Shield, Eye, ArrowUpDown, Calendar, LayoutList, Loader2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import ReactMarkdown from 'react-markdown';
+import { MarkdownEditor } from './MarkdownEditor';
 import { AppNote, NoteType, Visibility } from '../types';
 import { useUIStore } from '../store/useUIStore';
 import { useAuthStore } from '../features/auth/useAuthStore';
@@ -26,7 +28,8 @@ export const RightSidebar: React.FC = () => {
     selectedGroupId,
     activeNoteType, setActiveNoteType,
     noteContent, setNoteContent,
-    noteVisibility, setNoteVisibility
+    noteVisibility, setNoteVisibility,
+    setEstudyLauncher
   } = useUIStore();
 
   const institutionId = appUser?.church_id;
@@ -41,6 +44,24 @@ export const RightSidebar: React.FC = () => {
 
   const [showShared, setShowShared] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isFullscreenEditor, setIsFullscreenEditor] = useState(false);
+  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+
+  const handleCopy = (id: string, content: string) => {
+    navigator.clipboard.writeText(content);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedNotes(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const getPlanTitle = (planId: string) => {
+     return allPlans.find(p => String(p.plan_id) === String(planId))?.title || 'Unknown Plan';
+  };
 
   // --- Computed ---
   const currentGroup = useMemo(() => myGroups.find(g => String(g.group_id) === String(selectedGroupId)) || myGroups[0], [myGroups, selectedGroupId]);
@@ -86,7 +107,13 @@ export const RightSidebar: React.FC = () => {
   };
 
   const onToggleCollapse = () => setNotesCollapsed(!isNotesCollapsed);
-  const onDeleteNote = (id: string) => deleteNoteMutation.mutate({ institutionId: institutionId!, groupId: selectedGroupId!, noteId: id });
+  const onDeleteNote = (id: string) => {
+    setDeletingId(id);
+    deleteNoteMutation.mutate(
+      { institutionId: institutionId!, groupId: selectedGroupId!, noteId: id },
+      { onSettled: () => setDeletingId(null) }
+    );
+  };
 
   return (
     <div className="relative flex h-full">
@@ -191,11 +218,11 @@ export const RightSidebar: React.FC = () => {
                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Insight</span>
                        <span className="text-[10px] font-bold text-zinc-300">Markdown supported</span>
                      </div>
-                    <textarea 
+                    <MarkdownEditor
                       value={noteContent}
-                      onChange={(e) => setNoteContent(e.target.value)}
-                      placeholder="Capture your reflection here..."
-                      className="w-full h-32 p-4 bg-zinc-50 border border-zinc-100 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-brand-orange/10 text-sm font-serif shadow-inner placeholder:italic"
+                      onChange={setNoteContent}
+                      isFullscreen={isFullscreenEditor}
+                      onToggleFullscreen={() => setIsFullscreenEditor(!isFullscreenEditor)}
                     />
                   </div>
 
@@ -221,10 +248,10 @@ export const RightSidebar: React.FC = () => {
 
                   <button 
                     onClick={handleSaveNote}
-                    disabled={!noteContent.trim()}
-                    className="w-full py-4 bg-brand-orange hover:bg-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-brand-orange/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                    disabled={!noteContent.trim() || saveNoteMutation.isPending}
+                    className="flex justify-center items-center gap-2 w-full py-4 bg-brand-orange hover:bg-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-brand-orange/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                   >
-                    DEPLOY NOTE TO ENGINE
+                    {saveNoteMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : 'DEPLOY NOTE TO ENGINE'}
                   </button>
                 </div>
               ) : (
@@ -290,7 +317,7 @@ export const RightSidebar: React.FC = () => {
                                 note.note_type === 'verse' ? 'bg-blue-50 border-blue-100 text-blue-600' : 
                                 'bg-zinc-100 border-zinc-200 text-zinc-600'
                               }`}>
-                                {note.note_type}
+                                {note.note_type === 'plan' ? `plan: ${getPlanTitle(note.plan_id)}` : note.note_type}
                               </span>
                               {note.visibility === 'shared_group' && (
                                 <span className="flex items-center gap-1 text-[8px] font-black text-brand-orange uppercase tracking-widest bg-brand-orange/5 px-2 py-0.5 rounded-full">
@@ -302,31 +329,44 @@ export const RightSidebar: React.FC = () => {
                             
                             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button 
+                                onClick={() => handleCopy(note.note_id, note.content)}
                                 className="w-8 h-8 rounded-xl flex items-center justify-center bg-zinc-50 text-zinc-400 hover:text-brand-orange hover:bg-white border border-transparent hover:border-zinc-100 shadow-sm transition-all active:scale-95"
                                 title="Copy Content"
                               >
-                                <Copy size={14} />
+                                {copiedId === note.note_id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                               </button>
                               <button 
                                 onClick={() => onDeleteNote(note.note_id)}
-                                className="w-8 h-8 rounded-xl flex items-center justify-center bg-red-50 text-red-400 hover:bg-red-500 hover:text-white shadow-sm transition-all active:scale-95"
+                                disabled={deletingId === note.note_id}
+                                className="w-8 h-8 rounded-xl flex items-center justify-center bg-red-50 text-red-400 hover:bg-red-500 hover:text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
                                 title="Delete Note"
                               >
-                                <Trash2 size={14} />
+                                {deletingId === note.note_id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                               </button>
                             </div>
                           </div>
 
                           <div className="relative">
                             <div className="absolute -left-3 top-0 bottom-0 w-0.5 bg-zinc-50" />
-                            <p className="text-[15px] font-serif leading-[1.65] text-zinc-800 italic indent-2">
-                              {note.content}
-                            </p>
+                            <div className={`text-[15px] font-serif leading-[1.65] text-zinc-800 italic indent-2 markdown-body overflow-hidden ${expandedNotes[note.note_id] ? '' : 'line-clamp-3'}`}>
+                              <ReactMarkdown>{note.content}</ReactMarkdown>
+                            </div>
+                            {note.content.length > 150 && (
+                              <button 
+                                onClick={() => toggleExpand(note.note_id)}
+                                className="text-xs font-bold text-brand-orange hover:text-orange-600 mt-2 indent-2"
+                              >
+                                {expandedNotes[note.note_id] ? 'Show Less' : 'Read More'}
+                              </button>
+                            )}
                           </div>
 
                           <div className="flex items-center justify-between pt-4 border-t border-zinc-50">
                             {note.verse_id ? (
-                              <button className="flex items-center gap-2 text-[10px] font-black text-brand-orange uppercase tracking-widest hover:text-brand-dark transition-colors group/link">
+                              <button 
+                                onClick={() => setEstudyLauncher({ open: true, verseRef: note.verse_id })}
+                                className="flex items-center gap-2 text-[10px] font-black text-brand-orange uppercase tracking-widest hover:text-brand-dark transition-colors group/link"
+                              >
                                 <div className="w-5 h-5 rounded-md bg-brand-orange/10 flex items-center justify-center group-hover/link:bg-brand-orange transition-colors">
                                   <BookOpen size={10} className="group-hover/link:text-white" />
                                 </div>
@@ -366,10 +406,27 @@ export const RightSidebar: React.FC = () => {
                          </div>
                          <span className="text-[9px] font-bold text-zinc-300 uppercase">{note.created_at}</span>
                       </div>
-                      <p className="text-sm font-serif text-zinc-700 leading-relaxed italic">"{note.content}"</p>
+                      <div className={`text-sm font-serif text-zinc-700 leading-relaxed italic markdown-body overflow-hidden ${expandedNotes[note.note_id] ? '' : 'line-clamp-3'}`}>
+                        <ReactMarkdown>{note.content}</ReactMarkdown>
+                      </div>
+                      {note.content.length > 150 && (
+                        <button 
+                          onClick={() => toggleExpand(note.note_id)}
+                          className="text-xs font-bold text-brand-orange hover:text-orange-600 mt-1"
+                        >
+                          {expandedNotes[note.note_id] ? 'Show Less' : 'Read More'}
+                        </button>
+                      )}
                       <div className="flex items-center gap-2">
                          <span className="text-[8px] font-black uppercase tracking-wider text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded">{note.note_type}</span>
-                         {note.verse_id && <span className="text-[8px] font-black uppercase tracking-wider text-brand-orange">{note.verse_id}</span>}
+                         {note.verse_id && (
+                           <button 
+                             onClick={() => setEstudyLauncher({ open: true, verseRef: note.verse_id })}
+                             className="text-[8px] font-black uppercase tracking-wider text-brand-orange hover:underline"
+                           >
+                             {note.verse_id}
+                           </button>
+                         )}
                       </div>
                     </div>
                   ))
