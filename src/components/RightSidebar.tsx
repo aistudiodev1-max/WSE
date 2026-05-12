@@ -396,7 +396,7 @@ export const RightSidebar: React.FC = () => {
               <div className="space-y-4">
                 {sharedNotesList.length > 0 ? (
                   sharedNotesList.map(note => (
-                    <div key={note.note_id} className="p-5 bg-white rounded-2xl border-l-4 border-l-brand-orange border-zinc-100 shadow-sm space-y-3">
+                    <div key={note.note_id} className="p-5 bg-white rounded-2xl border-l-4 border-l-brand-orange border-zinc-100 shadow-sm space-y-3 relative group">
                       <div className="flex items-center justify-between">
                          <div className="flex items-center gap-2">
                            <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-white text-[8px] font-black">
@@ -417,16 +417,37 @@ export const RightSidebar: React.FC = () => {
                           {expandedNotes[note.note_id] ? 'Show Less' : 'Read More'}
                         </button>
                       )}
-                      <div className="flex items-center gap-2">
-                         <span className="text-[8px] font-black uppercase tracking-wider text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded">{note.note_type}</span>
-                         {note.verse_id && (
-                           <button 
-                             onClick={() => setEstudyLauncher({ open: true, verseRef: note.verse_id })}
-                             className="text-[8px] font-black uppercase tracking-wider text-brand-orange hover:underline"
-                           >
-                             {note.verse_id}
-                           </button>
-                         )}
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2">
+                           <span className="text-[8px] font-black uppercase tracking-wider text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded">{note.note_type}</span>
+                           {note.verse_id && (
+                             <button 
+                               onClick={() => setEstudyLauncher({ open: true, verseRef: note.verse_id })}
+                               className="text-[8px] font-black uppercase tracking-wider text-brand-orange hover:underline"
+                             >
+                               {note.verse_id}
+                             </button>
+                           )}
+                        </div>
+                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => handleCopy(note.note_id, note.content)}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center bg-zinc-50 text-zinc-400 hover:text-brand-orange hover:bg-white border border-transparent hover:border-zinc-100 shadow-sm transition-all active:scale-95"
+                            title="Copy Content"
+                          >
+                            {copiedId === note.note_id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                          </button>
+                          {note.user_id === user?.uid && (
+                            <button 
+                              onClick={() => onDeleteNote(note.note_id)}
+                              disabled={deletingId === note.note_id}
+                              className="w-8 h-8 rounded-xl flex items-center justify-center bg-red-50 text-red-400 hover:bg-red-500 hover:text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                              title="Delete Note"
+                            >
+                              {deletingId === note.note_id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))
