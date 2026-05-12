@@ -8,6 +8,8 @@ import { Menu, X, Star } from 'lucide-react';
 import { useAuthStore } from '../features/auth/useAuthStore';
 import { useUIStore } from '../store/useUIStore';
 
+import Image from 'next/image';
+
 const MAIN_APP_ORIGIN = 'https://app.wisdomebooksclub.com'; 
 const WEBSITE_ORIGIN = 'https://www.wisdomebooksclub.com';
 
@@ -109,13 +111,13 @@ export const Header: React.FC = () => {
               href={isAuthenticated ? `${MAIN_APP_ORIGIN}/dashboard` : WEBSITE_ORIGIN}
               className="flex items-center gap-2 cursor-pointer no-underline group"
             >
-              <img
+              <Image
                 src={'/images/Logo_2.png'}
+                width={80}
+                height={80}
                 className="w-[33px] h-[40px] md:w-[80px] md:h-[80px] object-cover"
                 alt="logo"
-                onError={(e) => {
-                  e.currentTarget.src = "https://picsum.photos/seed/wisdom_logo/100/100";
-                }}
+                referrerPolicy="no-referrer"
               />
               <div className="text-white font-sans font-bold text-[18px] whitespace-nowrap">
                 Wisdom{' '}
@@ -195,10 +197,13 @@ export const Header: React.FC = () => {
               
               {isAuthenticated && (
                 <div className="relative flex items-center justify-center">
-                  <img
+                  <Image
                     src={`https://ui-avatars.com/api/?name=${encodeURIComponent(appUser?.user_name || 'User')}&background=333&color=fff`}
+                    width={35}
+                    height={35}
                     className="h-[35px] w-[35px] rounded-full object-cover self-center"
                     alt="User avatar"
+                    referrerPolicy="no-referrer"
                   />
                   {(appUser?.membership_level === 'Study Essentials' || appUser?.membership_level === 'Bible Study Plus') && (
                     <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-[2px] flex items-center justify-center">
