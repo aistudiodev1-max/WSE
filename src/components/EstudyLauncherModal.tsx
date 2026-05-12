@@ -35,26 +35,26 @@ export const EstudyLauncherModal: React.FC<EstudyLauncherModalProps> = ({
   const options = [
     {
       suite: 'parallelBible' as const,
-      label: 'Parallel Bible',
-      description: 'Compare translations side by side.',
+      label: 'Parallel: Side-by-Side Bible',
+      description: 'Compare up to three Bible versions side-by-side—see differences instantly, keep every verse aligned, and even view multiple languages on one screen.',
       icon: Layers,
     },
     {
       suite: 'interlinear' as const,
-      label: 'Interlinear',
-      description: 'Original-language lines with glosses.',
+      label: 'Hebrew-Greek Interlinear Bible',
+      description: 'Study Scripture word-by-word with the Hebrew–Greek Interlinear—tap any word for pronunciation, Strong\'s, and definitions.',
       icon: BookOpen,
     },
     {
       suite: 'crossReference' as const,
       label: 'Cross-Reference Bible',
-      description: 'On web, q is for Treasury word search, not passage navigation.',
+      description: 'Cross reference linked passages and supporting Scriptures in 30+ Bible versions.',
       icon: GitBranch,
     },
     {
       suite: 'biblePlus' as const,
       label: 'Bible Plus',
-      description: 'Enhanced Bible study tools.',
+      description: 'Enjoy the convenience of listening to the Bible with Bible Plus.',
       icon: Sparkles,
     },
   ] as const;

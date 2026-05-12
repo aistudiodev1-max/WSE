@@ -27,3 +27,21 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+.markdown-body p {
+  margin-bottom: 0.5rem;
+}
+.markdown-body p:last-child {
+  margin-bottom: 0;
+}
+.markdown-body h1 {
+  font-weight: 700;
+  font-size: 1.25em;
+  margin-bottom: 0.25rem;
+}
+.markdown-body strong {
+  font-weight: 700;
+}
+.markdown-body em {
+  font-style: italic;
+}
