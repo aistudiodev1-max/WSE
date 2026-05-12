@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Bold, Italic, Heading, Maximize2, Minimize2 } from 'lucide-react';
 
 interface MarkdownEditorProps {
@@ -15,6 +16,11 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   onToggleFullscreen
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const insertText = (before: string, after: string = '') => {
     const textarea = textareaRef.current;
@@ -33,14 +39,10 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     }, 0);
   };
 
-  return (
-    <>
-      {isFullscreen && (
-        <div className="fixed inset-0 z-[999] bg-black/50 backdrop-blur-sm" onClick={onToggleFullscreen} />
-      )}
-      <div className={`flex flex-col bg-zinc-50 border border-zinc-200 rounded-xl overflow-hidden transition-all duration-300 ${isFullscreen ? 'fixed inset-4 md:inset-10 z-[1000] shadow-2xl bg-white' : 'h-40 relative'}`}>
-        <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-zinc-200 shrink-0">
-          <div className="flex items-center gap-1">
+  const editorContent = (
+    <div className={`flex flex-col bg-zinc-50 border border-zinc-200 rounded-xl overflow-hidden transition-all duration-300 ${isFullscreen ? 'fixed inset-4 md:inset-10 z-[9999] shadow-2xl bg-white' : 'h-40 relative'}`}>
+      <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-zinc-200 shrink-0">
+        <div className="flex items-center gap-1">
           <button onClick={() => insertText('# ')} className="p-1.5 rounded-lg text-zinc-500 hover:text-brand-dark hover:bg-zinc-100 transition-colors" title="Heading">
             <Heading size={14} />
           </button>
@@ -63,6 +65,17 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         className="flex-1 w-full p-4 resize-none focus:outline-none focus:ring-2 focus:ring-brand-orange/10 text-sm font-serif placeholder:italic bg-transparent"
       />
     </div>
-    </>
   );
+
+  if (!isFullscreen) {
+    return editorContent;
+  }
+
+  return mounted ? createPortal(
+    <>
+      <div className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm" onClick={onToggleFullscreen} />
+      {editorContent}
+    </>,
+    document.body
+  ) : null;
 };
