@@ -198,7 +198,7 @@ export const Header: React.FC = () => {
               {isAuthenticated && (
                 <div className="relative flex items-center justify-center">
                   <Image
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(appUser?.user_name || 'User')}&background=333&color=fff`}
+                    src={appUser?.avatar_url || '/images/default-avatar.jpg'}
                     width={35}
                     height={35}
                     className="h-[35px] w-[35px] rounded-full object-cover self-center"

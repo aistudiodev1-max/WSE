@@ -12,6 +12,7 @@ export interface User {
   church_id: string;
   church_name: string;
   group_id?: string;
+  avatar_url?: string;
 }
 
 export interface Group {
