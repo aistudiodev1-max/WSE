@@ -3,10 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
-import { BookMarked, X, Settings, Copy, Trash2, BookOpen, Share2, Shield, Eye, ArrowUpDown, Calendar, LayoutList, Loader2, Check } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { BookMarked, X, Settings, Copy, Trash2, BookOpen, Share2, Shield, Eye, ArrowUpDown, Calendar, LayoutList, Loader2, Check, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { MarkdownEditor } from './MarkdownEditor';
 import { AppNote, NoteType, Visibility } from '../types';
 import { useUIStore } from '../store/useUIStore';
@@ -47,16 +49,17 @@ export const RightSidebar: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isFullscreenEditor, setIsFullscreenEditor] = useState(false);
-  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+  const [expandedModalNote, setExpandedModalNote] = useState<AppNote | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleCopy = (id: string, content: string) => {
     navigator.clipboard.writeText(content);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const toggleExpand = (id: string) => {
-    setExpandedNotes(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const getPlanTitle = (planId: string) => {
@@ -329,6 +332,13 @@ export const RightSidebar: React.FC = () => {
                             
                             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button 
+                                onClick={() => setExpandedModalNote(note)}
+                                className="w-8 h-8 rounded-xl flex items-center justify-center bg-zinc-50 text-zinc-400 hover:text-brand-orange hover:bg-white border border-transparent hover:border-zinc-100 shadow-sm transition-all active:scale-95"
+                                title="Expand Note"
+                              >
+                                <Maximize2 size={14} />
+                              </button>
+                              <button 
                                 onClick={() => handleCopy(note.note_id, note.content)}
                                 className="w-8 h-8 rounded-xl flex items-center justify-center bg-zinc-50 text-zinc-400 hover:text-brand-orange hover:bg-white border border-transparent hover:border-zinc-100 shadow-sm transition-all active:scale-95"
                                 title="Copy Content"
@@ -348,15 +358,15 @@ export const RightSidebar: React.FC = () => {
 
                           <div className="relative">
                             <div className="absolute -left-3 top-0 bottom-0 w-0.5 bg-zinc-50" />
-                            <div className={`text-[15px] font-serif leading-[1.65] text-zinc-800 italic indent-2 markdown-body overflow-hidden ${expandedNotes[note.note_id] ? '' : 'line-clamp-3'}`}>
-                              <ReactMarkdown>{note.content}</ReactMarkdown>
+                            <div className={`text-[15px] font-serif leading-[1.65] text-zinc-800 italic indent-2 markdown-body overflow-hidden line-clamp-3`}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
                             </div>
                             {note.content.length > 150 && (
                               <button 
-                                onClick={() => toggleExpand(note.note_id)}
+                                onClick={() => setExpandedModalNote(note)}
                                 className="text-xs font-bold text-brand-orange hover:text-orange-600 mt-2 indent-2"
                               >
-                                {expandedNotes[note.note_id] ? 'Show Less' : 'Read More'}
+                                Read More
                               </button>
                             )}
                           </div>
@@ -406,15 +416,15 @@ export const RightSidebar: React.FC = () => {
                          </div>
                          <span className="text-[9px] font-bold text-zinc-300 uppercase">{note.created_at}</span>
                       </div>
-                      <div className={`text-sm font-serif text-zinc-700 leading-relaxed italic markdown-body overflow-hidden ${expandedNotes[note.note_id] ? '' : 'line-clamp-3'}`}>
-                        <ReactMarkdown>{note.content}</ReactMarkdown>
+                      <div className={`text-sm font-serif text-zinc-700 leading-relaxed italic markdown-body overflow-hidden line-clamp-3`}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
                       </div>
                       {note.content.length > 150 && (
                         <button 
-                          onClick={() => toggleExpand(note.note_id)}
+                          onClick={() => setExpandedModalNote(note)}
                           className="text-xs font-bold text-brand-orange hover:text-orange-600 mt-1"
                         >
-                          {expandedNotes[note.note_id] ? 'Show Less' : 'Read More'}
+                          Read More
                         </button>
                       )}
                       <div className="flex items-center justify-between w-full">
@@ -430,6 +440,13 @@ export const RightSidebar: React.FC = () => {
                            )}
                         </div>
                         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => setExpandedModalNote(note)}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center bg-zinc-50 text-zinc-400 hover:text-brand-orange hover:bg-white border border-transparent hover:border-zinc-100 shadow-sm transition-all active:scale-95"
+                            title="Expand Note"
+                          >
+                            <Maximize2 size={14} />
+                          </button>
                           <button 
                             onClick={() => handleCopy(note.note_id, note.content)}
                             className="w-8 h-8 rounded-xl flex items-center justify-center bg-zinc-50 text-zinc-400 hover:text-brand-orange hover:bg-white border border-transparent hover:border-zinc-100 shadow-sm transition-all active:scale-95"
@@ -461,6 +478,88 @@ export const RightSidebar: React.FC = () => {
       </div>
     </div>
   </motion.div>
+
+  {mounted && createPortal(
+    <AnimatePresence>
+      {expandedModalNote && (
+        <motion.div
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           exit={{ opacity: 0 }}
+           className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+           style={{ zIndex: 10000 }}
+           onClick={() => setExpandedModalNote(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            className="w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-zinc-100">
+               <div className="flex items-center gap-2">
+                 <span className={`text-[10px] uppercase font-black tracking-[0.15em] px-2 py-0.5 rounded-full border ${
+                   expandedModalNote.note_type === 'session' ? 'bg-orange-50 border-orange-100 text-orange-600' : 
+                   expandedModalNote.note_type === 'verse' ? 'bg-blue-50 border-blue-100 text-blue-600' : 
+                   'bg-zinc-100 border-zinc-200 text-zinc-600'
+                 }`}>
+                   {expandedModalNote.note_type === 'plan' ? `plan: ${getPlanTitle(expandedModalNote.plan_id)}` : expandedModalNote.note_type}
+                 </span>
+                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
+                   {expandedModalNote.user_name || 'Note'}
+                 </span>
+               </div>
+               <button 
+                 onClick={() => setExpandedModalNote(null)}
+                 className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
+               >
+                 <X size={20} />
+               </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 md:p-8">
+              <div className="markdown-body">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{expandedModalNote.content}</ReactMarkdown>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border-t border-zinc-100 bg-zinc-50 rounded-b-2xl">
+              <div className="flex items-center gap-2">
+                 {expandedModalNote.verse_id ? (
+                   <button 
+                     onClick={() => {
+                       setExpandedModalNote(null);
+                       setEstudyLauncher({ open: true, verseRef: expandedModalNote.verse_id });
+                     }}
+                     className="flex items-center gap-2 text-[10px] font-black text-brand-orange uppercase tracking-widest hover:text-brand-dark transition-colors group/link"
+                   >
+                     <div className="w-6 h-6 rounded-md bg-brand-orange/10 flex items-center justify-center group-hover/link:bg-brand-orange transition-colors">
+                       <BookOpen size={12} className="group-hover/link:text-white" />
+                     </div>
+                     {expandedModalNote.verse_id}
+                   </button>
+                 ) : <div />}
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+                  {expandedModalNote.created_at}
+                </span>
+                <button 
+                  onClick={() => handleCopy(expandedModalNote.note_id, expandedModalNote.content)}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center bg-white text-zinc-400 hover:text-brand-orange border border-zinc-200 shadow-sm transition-all active:scale-95"
+                  title="Copy Content"
+                >
+                  {copiedId === expandedModalNote.note_id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  )}
 </div>
   );
 };

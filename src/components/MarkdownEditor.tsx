@@ -47,7 +47,10 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   };
 
   const editorContent = (
-    <div className={`flex flex-col bg-zinc-50 border border-zinc-200 rounded-xl overflow-hidden transition-all duration-300 ${isFullscreen ? 'fixed inset-4 md:inset-10 z-[9999] shadow-2xl bg-white' : 'h-64 relative'}`}>
+    <div 
+      className={`flex flex-col bg-zinc-50 border border-zinc-200 rounded-xl overflow-hidden transition-all duration-300 ${isFullscreen ? 'fixed inset-4 md:inset-10 shadow-2xl bg-white' : 'h-64 relative'}`}
+      style={isFullscreen ? { zIndex: 10000 } : undefined}
+    >
       <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-zinc-200 shrink-0 overflow-x-auto">
         <div className="flex items-center gap-1 shrink-0">
           <button onClick={() => insertText('# ')} className="p-1.5 rounded-lg text-zinc-500 hover:text-brand-dark hover:bg-zinc-100 transition-colors" title="Heading">
@@ -147,7 +150,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
   return mounted ? createPortal(
     <>
-      <div className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm" onClick={onToggleFullscreen} />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" style={{ zIndex: 9999 }} onClick={onToggleFullscreen} />
       {editorContent}
     </>,
     document.body
