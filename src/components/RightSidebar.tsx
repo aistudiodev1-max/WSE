@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { BookMarked, X, Settings, Copy, Trash2, BookOpen, Share2, Shield, Eye, ArrowUpDown, Calendar, LayoutList, Loader2, Check, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -50,6 +50,11 @@ export const RightSidebar: React.FC = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isFullscreenEditor, setIsFullscreenEditor] = useState(false);
   const [expandedModalNote, setExpandedModalNote] = useState<AppNote | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleCopy = (id: string, content: string) => {
     navigator.clipboard.writeText(content);
@@ -474,8 +479,9 @@ export const RightSidebar: React.FC = () => {
     </div>
   </motion.div>
 
-  <AnimatePresence>
-      {expandedModalNote && createPortal(
+  {mounted && createPortal(
+    <AnimatePresence>
+      {expandedModalNote && (
         <motion.div
            initial={{ opacity: 0 }}
            animate={{ opacity: 1 }}
@@ -549,10 +555,11 @@ export const RightSidebar: React.FC = () => {
               </div>
             </div>
           </motion.div>
-        </motion.div>,
-        document.body
+        </motion.div>
       )}
-  </AnimatePresence>
+    </AnimatePresence>,
+    document.body
+  )}
 </div>
   );
 };
