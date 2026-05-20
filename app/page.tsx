@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Header } from '../src/components/Header';
-import { GroupSelection } from '../src/components/GroupSelection';
+import { MemberHome } from '../src/components/MemberHome';
 import { StudyEngine } from '../src/components/StudyEngine';
 import { EstudyLauncherModal } from '../src/components/EstudyLauncherModal';
 import { useAuthStore } from '../src/features/auth/useAuthStore';
@@ -54,7 +54,7 @@ export default function WisdomStudyPage() {
       <Header />
       
       {!selectedGroupId ? (
-        <GroupSelection />
+        <MemberHome />
       ) : (
         <StudyEngine />
       )}

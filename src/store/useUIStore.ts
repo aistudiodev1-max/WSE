@@ -16,7 +16,10 @@ interface UIState {
   suitePassageOverride: string | null;
   hasInteractedWithVerse: boolean;
 
+  activeMemberTab: 'dashboard' | 'plans' | 'groups' | 'notes' | 'study-groups';
+
   setActiveNav: (nav: string) => void;
+  setActiveMemberTab: (tab: 'dashboard' | 'plans' | 'groups' | 'notes' | 'study-groups') => void;
   setNotesCollapsed: (collapsed: boolean) => void;
   setSelectedPlanId: (id: string | null) => void;
   setSelectedSessionOrder: (order: number) => void;
@@ -43,8 +46,10 @@ export const useUIStore = create<UIState>((set) => ({
   suiteRouteKey: 'parallelBible',
   suitePassageOverride: null,
   hasInteractedWithVerse: true,
+  activeMemberTab: 'dashboard',
 
   setActiveNav: (activeNav) => set({ activeNav }),
+  setActiveMemberTab: (activeMemberTab) => set({ activeMemberTab }),
   setNotesCollapsed: (isNotesCollapsed) => set({ isNotesCollapsed }),
   setSelectedPlanId: (selectedPlanId) => set({ selectedPlanId }),
   setSelectedSessionOrder: (selectedSessionOrder) => set({ selectedSessionOrder }),
