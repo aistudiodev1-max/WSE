@@ -2,21 +2,40 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAuthStore } from '../../features/auth/useAuthStore';
-import { 
-  initialGroups, 
-  initialAssignments, 
-  initialProgress, 
-  initialSessions, 
-  initialStudyPlans 
-} from '../../data';
+import { useMyPlans, useMyProgress } from '../../features/member/hooks/useMyQueries';
+import { initialSessions } from '../../data';
 import { ChevronDown, ChevronUp, BookOpen, Check } from 'lucide-react';
 import { Progress } from '../../types';
 
 export const MyPlans: React.FC = () => {
   const { appUser } = useAuthStore();
-  const [localProgress, setLocalProgress] = useState<Progress[]>(initialProgress);
   const [expandedPlans, setExpandedPlans] = useState<Record<string, boolean>>({});
   const [showToast, setShowToast] = useState(false);
+  const [optimisticProgress, setOptimisticProgress] = useState<Progress[]>([]);
+
+  const { data: myPlansItems = [] } = useMyPlans();
+  const { data: serverProgress = [] } = useMyProgress();
+
+  const handleMarkComplete = (groupId: string, sessionId: string) => {
+    if (!appUser) return;
+    
+    const newProgress: Progress = {
+      progress_id: `p_local_${Date.now()}`,
+      user_id: appUser.user_id,
+      group_id: groupId,
+      session_id: sessionId,
+      status: 'completed',
+      completed_at: new Date().toISOString()
+    };
+    
+    setOptimisticProgress(prev => [...prev, newProgress]);
+    setShowToast(true);
+  };
+
+  const combinedProgress = useMemo(() => {
+    // combine server + optimistic client state
+    return [...serverProgress, ...optimisticProgress];
+  }, [serverProgress, optimisticProgress]);
 
   useEffect(() => {
     if (showToast) {
@@ -28,24 +47,14 @@ export const MyPlans: React.FC = () => {
   const assignmentsWithDetails = useMemo(() => {
     if (!appUser) return [];
 
-    const myGroupsList = initialGroups.filter(
-      (g) => g.members.includes(appUser.user_id) && g.church_id === appUser.church_id
-    );
-    const groupIds = myGroupsList.map(g => g.group_id);
-    const myAssignments = initialAssignments.filter((a) => groupIds.includes(a.group_id));
-
     const result = [];
     
-    for (const assignment of myAssignments) {
-      const plan = initialStudyPlans.find(p => p.plan_id === assignment.plan_id);
-      const group = myGroupsList.find(g => g.group_id === assignment.group_id);
-      
-      if (!plan || !group) continue;
+    for (const item of myPlansItems) {
+      const { plan, group } = item;
 
       const sessions = (initialSessions[plan.plan_id] || []).sort((a, b) => a.order - b.order);
       const completedSessions = sessions.filter(s => 
-        localProgress.some(p => 
-          p.user_id === appUser.user_id && 
+        combinedProgress.some(p => 
           p.group_id === group.group_id && 
           p.session_id === s.session_id && 
           p.status === 'completed'
@@ -83,26 +92,10 @@ export const MyPlans: React.FC = () => {
     }
 
     return result.sort((a, b) => b.progressPct - a.progressPct);
-  }, [appUser, localProgress]);
+  }, [appUser, myPlansItems, combinedProgress]);
 
   const toggleExpand = (id: string) => {
     setExpandedPlans(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleMarkComplete = (groupId: string, sessionId: string) => {
-    if (!appUser) return;
-    
-    const newProgress: Progress = {
-      progress_id: `p_local_${Date.now()}`,
-      user_id: appUser.user_id,
-      group_id: groupId,
-      session_id: sessionId,
-      status: 'completed',
-      completed_at: new Date().toISOString()
-    };
-    
-    setLocalProgress(prev => [...prev, newProgress]);
-    setShowToast(true);
   };
 
   if (!appUser) return null;

@@ -3,14 +3,9 @@
 import React, { useMemo } from 'react';
 import { useAuthStore } from '../../features/auth/useAuthStore';
 import { useUIStore } from '../../store/useUIStore';
-import { 
-  initialGroups, 
-  initialAssignments, 
-  initialProgress, 
-  initialNotes, 
-  initialSessions, 
-  initialStudyPlans 
-} from '../../data';
+import { useMyGroups } from '../../features/groups/hooks';
+import { useMyPlans, useMyProgress, useMyNotes } from '../../features/member/hooks/useMyQueries';
+import { initialSessions } from '../../data';
 import { CheckCircle, NotepadText, ArrowRight, Play, LayoutDashboard } from 'lucide-react';
 
 export const MemberDashboard: React.FC = () => {
@@ -19,34 +14,21 @@ export const MemberDashboard: React.FC = () => {
 
   const firstName = appUser?.user_name?.split(' ')[0] || 'Member';
 
-  // Computed data
-  const myGroupsList = useMemo(() => {
-    if (!appUser) return [];
-    return initialGroups.filter(
-      (g) => g.members.includes(appUser.user_id) && g.church_id === appUser.church_id
-    );
-  }, [appUser]);
-
-  const groupIds = useMemo(() => myGroupsList.map(g => g.group_id), [myGroupsList]);
-
-  const myAssignments = useMemo(() => {
-    return initialAssignments.filter((a) => groupIds.includes(a.group_id));
-  }, [groupIds]);
+  const { data: myGroupsList = [] } = useMyGroups();
+  const { data: myPlansItems = [] } = useMyPlans();
+  const { data: myProgressData = [] } = useMyProgress();
+  const { data: myNotesData = [] } = useMyNotes();
 
   const activePlanIds = useMemo(() => {
-    const ids = new Set(myAssignments.map(a => a.plan_id));
+    const ids = new Set(myPlansItems.map(p => p.plan.plan_id));
     return Array.from(ids);
-  }, [myAssignments]);
+  }, [myPlansItems]);
 
   const completedSessionsCount = useMemo(() => {
-    if (!appUser) return 0;
-    return initialProgress.filter((p) => p.user_id === appUser.user_id && p.status === 'completed').length;
-  }, [appUser]);
+    return myProgressData.filter((p) => p.status === 'completed').length;
+  }, [myProgressData]);
 
-  const myNotesCount = useMemo(() => {
-    if (!appUser) return 0;
-    return initialNotes.filter((n) => n.user_id === appUser.user_id).length;
-  }, [appUser]);
+  const myNotesCount = myNotesData.length;
 
   // Find next sessions
   const nextSessions = useMemo(() => {
@@ -54,23 +36,18 @@ export const MemberDashboard: React.FC = () => {
     const sessions = [];
     
     // Sort assignments by date desc to get recent ones first
-    const sortedAssignments = [...myAssignments].sort(
-      (a, b) => new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime()
+    const sortedAssignments = [...myPlansItems].sort(
+      (a, b) => new Date(b.assignment.assigned_at).getTime() - new Date(a.assignment.assigned_at).getTime()
     );
 
-    for (const assignment of sortedAssignments) {
+    for (const item of sortedAssignments) {
+      const { assignment, plan, group } = item;
       const planSessions = initialSessions[assignment.plan_id] || [];
-      const plan = initialStudyPlans.find(p => p.plan_id === assignment.plan_id);
-      const group = myGroupsList.find(g => g.group_id === assignment.group_id);
-      
-      if (!plan || !group) continue;
-      
       const sortedPlanSessions = [...planSessions].sort((a, b) => a.order - b.order);
       
       for (const session of sortedPlanSessions) {
-        const isCompleted = initialProgress.some(
-          p => p.user_id === appUser.user_id && 
-               p.group_id === group.group_id && 
+        const isCompleted = myProgressData.some(
+          p => p.group_id === group.group_id && 
                p.session_id === session.session_id && 
                p.status === 'completed'
         );
@@ -82,7 +59,7 @@ export const MemberDashboard: React.FC = () => {
       }
     }
     return sessions;
-  }, [appUser, myAssignments, myGroupsList]);
+  }, [appUser, myPlansItems, myProgressData]);
 
   const continueSession = nextSessions[0];
   const upcomingSessionsList = nextSessions.slice(1, 4);
@@ -91,8 +68,7 @@ export const MemberDashboard: React.FC = () => {
   const recentActivity = useMemo(() => {
     if (!appUser) return [];
     
-    const myRecentNotes = initialNotes
-      .filter(n => n.user_id === appUser.user_id)
+    const myRecentNotes = myNotesData
       .map(n => ({
         id: n.note_id,
         type: 'note' as const,
@@ -103,8 +79,8 @@ export const MemberDashboard: React.FC = () => {
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .slice(0, 3);
       
-    const myRecentProgress = initialProgress
-      .filter(p => p.user_id === appUser.user_id && p.status === 'completed' && p.completed_at)
+    const myRecentProgress = myProgressData
+      .filter(p => p.status === 'completed' && p.completed_at)
       .map(p => {
         let sessionTitle = 'a session';
         // Try to find session title
@@ -129,7 +105,7 @@ export const MemberDashboard: React.FC = () => {
     return [...myRecentNotes, ...myRecentProgress]
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .slice(0, 5);
-  }, [appUser]);
+  }, [appUser, myNotesData, myProgressData]);
 
   if (!appUser) return null;
 

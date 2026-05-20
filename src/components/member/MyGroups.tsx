@@ -3,8 +3,8 @@
 import React, { useMemo, useState } from 'react';
 import { useAuthStore } from '../../features/auth/useAuthStore';
 import { useUIStore } from '../../store/useUIStore';
+import { useMyGroups } from '../../features/groups/hooks';
 import { 
-  initialGroups, 
   initialUsers,
   initialAssignments, 
   initialProgress, 
@@ -17,13 +17,11 @@ export const MyGroups: React.FC = () => {
   const { appUser } = useAuthStore();
   const { setSelectedGroupId } = useUIStore();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  
+  const { data: myGroupsList = [] } = useMyGroups();
 
   const groupsWithDetails = useMemo(() => {
     if (!appUser) return [];
-
-    const myGroupsList = initialGroups.filter(
-      (g) => g.members.includes(appUser.user_id) && g.church_id === appUser.church_id
-    );
 
     const result = [];
     

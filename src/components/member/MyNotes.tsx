@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuthStore } from '../../features/auth/useAuthStore';
+import { useMyNotes } from '../../features/member/hooks/useMyQueries';
+import { useMyGroups } from '../../features/groups/hooks';
 import { 
-  initialNotes, 
-  initialGroups, 
   initialStudyPlans, 
   initialSessions, 
   initialAssignments
@@ -14,7 +14,12 @@ import { StickyNote, Plus, Lock, Globe, Trash2, Edit2, X, Check } from 'lucide-r
 
 export const MyNotes: React.FC = () => {
   const { appUser } = useAuthStore();
-  const [notes, setNotes] = useState<AppNote[]>([]);
+  
+  const { data: serverNotes = [] } = useMyNotes();
+  const { data: myGroups = [] } = useMyGroups();
+
+  const [localNotes, setLocalNotes] = useState<AppNote[]>([]);
+  const [deletedNoteIds, setDeletedNoteIds] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
@@ -28,12 +33,18 @@ export const MyNotes: React.FC = () => {
   const [addVisibility, setAddVisibility] = useState<Visibility>('private');
   const [addContent, setAddContent] = useState('');
 
-  useEffect(() => {
-    if (appUser) {
-      const userNotes = initialNotes.filter(n => n.user_id === appUser.user_id);
-      setNotes(userNotes);
+  const activeNotes = useMemo(() => {
+    // combine server + local, filter deleted
+    const combined = [...serverNotes, ...localNotes].filter(n => !deletedNoteIds.has(n.note_id));
+    // deduplicate if same ID locally overrides server
+    const deduped: Record<string, AppNote> = {};
+    for (const n of combined) {
+      if (!deduped[n.note_id] || n.note_id.startsWith('n_local_')) {
+        deduped[n.note_id] = n;
+      }
     }
-  }, [appUser]);
+    return Object.values(deduped).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [serverNotes, localNotes, deletedNoteIds]);
 
   useEffect(() => {
     if (showToast) {
@@ -41,15 +52,6 @@ export const MyNotes: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [showToast]);
-
-  const sortedNotes = useMemo(() => {
-    return [...notes].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [notes]);
-
-  const myGroups = useMemo(() => {
-    if (!appUser) return [];
-    return initialGroups.filter(g => g.members.includes(appUser.user_id) && g.church_id === appUser.church_id);
-  }, [appUser]);
 
   const availablePlans = useMemo(() => {
     if (!addGroup) return [];
@@ -68,7 +70,7 @@ export const MyNotes: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    setNotes(prev => prev.filter(n => n.note_id !== id));
+    setDeletedNoteIds(prev => new Set(prev).add(id));
     triggerToast('Note deleted');
   };
 
@@ -78,7 +80,14 @@ export const MyNotes: React.FC = () => {
   };
 
   const handleSaveEdit = (id: string) => {
-    setNotes(prev => prev.map(n => n.note_id === id ? { ...n, content: editContent } : n));
+    // Update local overrides
+    const existing = activeNotes.find(n => n.note_id === id);
+    if (existing) {
+      setLocalNotes(prev => [
+        ...prev.filter(n => n.note_id !== id), 
+        { ...existing, content: editContent }
+      ]);
+    }
     setEditingId(null);
     triggerToast('Note updated');
   };
@@ -102,7 +111,7 @@ export const MyNotes: React.FC = () => {
       created_at: new Date().toISOString()
     };
 
-    setNotes(prev => [newNote, ...prev]);
+    setLocalNotes(prev => [newNote, ...prev]);
     setIsAdding(false);
     setAddGroup('');
     setAddPlan('');
@@ -121,10 +130,10 @@ export const MyNotes: React.FC = () => {
         <div className="bg-brand-teal/20 border border-brand-teal text-sm text-zinc-700 rounded-xl p-4 mb-6">
           You have observer access — notes are read-only.
         </div>
-        {sortedNotes.length > 0 ? (
+        {activeNotes.length > 0 ? (
           <div className="space-y-4">
              {/* Render read-only list */}
-             {sortedNotes.map(note => (
+             {activeNotes.map(note => (
                <div key={note.note_id} className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-zinc-100 p-6 opacity-80">
                  <p className="text-sm text-zinc-700 whitespace-pre-wrap">{note.content}</p>
                  <div className="flex items-center gap-3 mt-4 text-xs text-zinc-400">
@@ -252,10 +261,10 @@ export const MyNotes: React.FC = () => {
         </div>
       )}
 
-      {sortedNotes.length > 0 ? (
+      {activeNotes.length > 0 ? (
         <div className="space-y-4">
-          {sortedNotes.map(note => {
-            const groupName = initialGroups.find(g => g.group_id === note.group_id)?.group_name || 'Unknown Group';
+          {activeNotes.map(note => {
+            const groupName = myGroups.find(g => g.group_id === note.group_id)?.group_name || 'Unknown Group';
             const planTitle = initialStudyPlans.find(p => p.plan_id === note.plan_id)?.title || 'Unknown Plan';
             const sessionTitle = note.session_id ? initialSessions[note.plan_id]?.find(s => s.session_id === note.session_id)?.title : null;
 
